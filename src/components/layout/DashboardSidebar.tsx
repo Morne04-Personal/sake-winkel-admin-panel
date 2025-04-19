@@ -1,4 +1,3 @@
-
 import { 
   LayoutDashboard, 
   Package, 
@@ -17,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import ColorDivider from "../ColorDivider";
 
 const menuItems = [
   {
