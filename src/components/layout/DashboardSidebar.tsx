@@ -1,10 +1,12 @@
+
 import { 
   LayoutDashboard, 
   Package, 
   Users, 
   Building2, 
   CalendarDays,
-  Settings
+  Settings,
+  BoxCheck 
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +25,11 @@ const menuItems = [
     title: "Dashboard",
     icon: LayoutDashboard,
     url: "/",
+  },
+  {
+    title: "Order Tracking",
+    icon: BoxCheck,
+    url: "/order-tracking",
   },
   {
     title: "Products",
