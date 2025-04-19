@@ -2,6 +2,7 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -16,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Supplier } from "@/types";
 import CrudDialog from "@/components/common/CrudDialog";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -23,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface SupplierFormProps {
   isOpen: boolean;
@@ -67,7 +70,30 @@ const supplierSchema = z.object({
 
 type SupplierFormValues = z.infer<typeof supplierSchema>;
 
+type FormStep = {
+  title: string;
+  fields: (keyof SupplierFormValues)[];
+};
+
 const SupplierForm = ({ isOpen, onClose, onSave, initialData, isAdd }: SupplierFormProps) => {
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(0);
+  
+  const formSteps: FormStep[] = [
+    {
+      title: "Company Info",
+      fields: ["name", "trading_as", "entity_type"]
+    },
+    {
+      title: "Identification",
+      fields: ["identification_type", "identification_number", "is_vat_registered", "vat_number", "is_vat_exempt"]
+    },
+    {
+      title: "Classification",
+      fields: ["industry_sector", "cluster_grouping", "zone", "description", "logo_url", "settlement_bank_choice", "comments"]
+    }
+  ];
+
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierSchema),
     defaultValues: initialData || {
@@ -92,6 +118,25 @@ const SupplierForm = ({ isOpen, onClose, onSave, initialData, isAdd }: SupplierF
 
   const watchIsVatRegistered = form.watch("is_vat_registered");
 
+  const handleNext = async () => {
+    const currentFields = formSteps[currentStep].fields;
+    const isValid = await form.trigger(currentFields as any);
+    
+    if (isValid) {
+      setCurrentStep((prev) => Math.min(prev + 1, formSteps.length - 1));
+    } else {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before proceeding",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+
   const handleSubmit = (values: SupplierFormValues) => {
     onSave(values as Supplier);
   };
@@ -102,266 +147,332 @@ const SupplierForm = ({ isOpen, onClose, onSave, initialData, isAdd }: SupplierF
       description={isAdd ? "Add a new supplier to the system" : "Edit supplier details"}
       isOpen={isOpen}
       onClose={onClose}
+      size="large"
     >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Company Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Registered company name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="trading_as"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Trading As</FormLabel>
-                <FormControl>
-                  <Input placeholder="Trading name (if different)" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="identification_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Identification Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {identificationTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="identification_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Identification Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Registration/ID number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <div className="form-steps">
+        {formSteps.map((step, index) => (
+          <div 
+            key={index} 
+            className={`form-step ${index === currentStep ? "active" : ""} ${index < currentStep ? "completed" : ""}`}
+          >
+            <div className="form-step-number">
+              {index < currentStep ? <Check className="h-4 w-4" /> : index + 1}
+            </div>
+            <div className="form-step-label">{step.title}</div>
+            {index < formSteps.length - 1 && <div className="form-step-line" />}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="is_vat_registered"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="font-normal">
-                    VAT Registered
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {watchIsVatRegistered && (
+        ))}
+      </div>
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          {currentStep === 0 && (
+            <div className="space-y-6">
               <FormField
                 control={form.control}
-                name="vat_number"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>VAT Number</FormLabel>
+                    <FormLabel>Company Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="VAT number" {...field} value={field.value || ''} />
+                      <Input placeholder="Registered company name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
-          </div>
 
-          <FormField
-            control={form.control}
-            name="is_vat_exempt"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
+              <FormField
+                control={form.control}
+                name="trading_as"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Trading As</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Trading name (if different)" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="entity_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Entity Type</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Pty Ltd, Sole Proprietor" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div className="form-grid-2">
+                <FormField
+                  control={form.control}
+                  name="identification_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Identification Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {identificationTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="identification_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Identification Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Registration/ID number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="form-grid-2">
+                <FormField
+                  control={form.control}
+                  name="is_vat_registered"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        VAT Registered
+                      </FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {watchIsVatRegistered && (
+                  <FormField
+                    control={form.control}
+                    name="vat_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>VAT Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="VAT number" {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormLabel className="font-normal">
-                  VAT Exempt
-                </FormLabel>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                )}
+              </div>
 
-          <FormField
-            control={form.control}
-            name="industry_sector"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Industry Sector</FormLabel>
-                <FormControl>
-                  <Input placeholder="Industry sector" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="is_vat_exempt"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      VAT Exempt
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="zone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Zone/Region</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Geographical zone" {...field} value={field.value || ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="industry_sector"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Industry Sector</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Industry sector" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="cluster_grouping"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cluster/Grouping</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Supplier group" {...field} value={field.value || ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              <div className="form-grid-2">
+                <FormField
+                  control={form.control}
+                  name="zone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Zone/Region</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Geographical zone" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder="Supplier description" 
-                    rows={2}
-                    {...field} 
-                    value={field.value || ''} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name="cluster_grouping"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cluster/Grouping</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Supplier group" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-          <FormField
-            control={form.control}
-            name="logo_url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Logo URL</FormLabel>
-                <FormControl>
-                  <Input placeholder="URL to company logo" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Supplier description" 
+                        rows={2}
+                        {...field} 
+                        value={field.value || ''} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="settlement_bank_choice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Settlement Bank</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select bank" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {bankChoices.map((bank) => (
-                      <SelectItem key={bank} value={bank}>
-                        {bank}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="logo_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Logo URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="URL to company logo" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="comments"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Comments</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder="Additional comments" 
-                    rows={2}
-                    {...field} 
-                    value={field.value || ''} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="settlement_bank_choice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Settlement Bank</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select bank" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {bankChoices.map((bank) => (
+                          <SelectItem key={bank} value={bank}>
+                            {bank}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
+              <FormField
+                control={form.control}
+                name="comments"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Comments</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Additional comments" 
+                        rows={2}
+                        {...field} 
+                        value={field.value || ''} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-between pt-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentStep === 0}
+              className="btn-cancel flex gap-2"
             >
-              Cancel
+              <ChevronLeft className="h-4 w-4" /> Back
             </Button>
-            <Button type="submit" className="bg-sakewinkel-navy">
-              {isAdd ? "Add Supplier" : "Save Changes"}
-            </Button>
+            
+            <div className="space-x-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                className="btn-cancel"
+              >
+                Cancel
+              </Button>
+              
+              {currentStep < formSteps.length - 1 ? (
+                <Button 
+                  type="button" 
+                  onClick={handleNext}
+                  className="btn-submit flex gap-2"
+                >
+                  Next <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button type="submit" className="btn-submit">
+                  {isAdd ? "Add Supplier" : "Save Changes"}
+                </Button>
+              )}
+            </div>
           </div>
         </form>
       </Form>

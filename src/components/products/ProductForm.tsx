@@ -2,6 +2,7 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types";
 import CrudDialog from "@/components/common/CrudDialog";
 import { mockSuppliers } from "@/data/mockData";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -24,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -57,7 +60,30 @@ const productSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
+type FormStep = {
+  title: string;
+  fields: (keyof ProductFormValues)[];
+};
+
 const ProductForm = ({ isOpen, onClose, onSave, initialData, isAdd }: ProductFormProps) => {
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(0);
+  
+  const formSteps: FormStep[] = [
+    {
+      title: "Basic Info",
+      fields: ["supplier_id", "name", "original_price", "sale_price"]
+    },
+    {
+      title: "Inventory & Pricing",
+      fields: ["qty_in_stock", "delivery_cost", "commission_value", "max_per_order"]
+    },
+    {
+      title: "Product Details",
+      fields: ["short_overview", "description", "color", "specifications", "main_image_url", "on_homepage"]
+    }
+  ];
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: initialData || {
@@ -78,6 +104,25 @@ const ProductForm = ({ isOpen, onClose, onSave, initialData, isAdd }: ProductFor
     },
   });
 
+  const handleNext = async () => {
+    const currentFields = formSteps[currentStep].fields;
+    const isValid = await form.trigger(currentFields as any);
+    
+    if (isValid) {
+      setCurrentStep((prev) => Math.min(prev + 1, formSteps.length - 1));
+    } else {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before proceeding",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+
   const handleSubmit = (values: ProductFormValues) => {
     onSave(values as Product);
   };
@@ -88,259 +133,311 @@ const ProductForm = ({ isOpen, onClose, onSave, initialData, isAdd }: ProductFor
       description={isAdd ? "Add a new product to the catalog" : "Edit product details"}
       isOpen={isOpen}
       onClose={onClose}
+      size="large"
     >
+      <div className="form-steps">
+        {formSteps.map((step, index) => (
+          <div 
+            key={index} 
+            className={`form-step ${index === currentStep ? "active" : ""} ${index < currentStep ? "completed" : ""}`}
+          >
+            <div className="form-step-number">
+              {index < currentStep ? <Check className="h-4 w-4" /> : index + 1}
+            </div>
+            <div className="form-step-label">{step.title}</div>
+            {index < formSteps.length - 1 && <div className="form-step-line" />}
+          </div>
+        ))}
+      </div>
+      
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="supplier_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Supplier</FormLabel>
-                <Select 
-                  onValueChange={(value) => field.onChange(Number(value))}
-                  defaultValue={field.value.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select supplier" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {mockSuppliers.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          {currentStep === 0 && (
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="supplier_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supplier</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      defaultValue={field.value.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select supplier" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {mockSuppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Product name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Product name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="original_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Original Price (R)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="form-grid-2">
+                <FormField
+                  control={form.control}
+                  name="original_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Original Price (R)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="sale_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Sale Price (R) (Optional)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      step="0.01" 
-                      placeholder="If on sale"
-                      {...field}
-                      value={field.value === null ? '' : field.value}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                <FormField
+                  control={form.control}
+                  name="sale_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sale Price (R) (Optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          placeholder="If on sale"
+                          {...field}
+                          value={field.value === null ? '' : field.value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="qty_in_stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock Quantity</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div className="form-grid-2">
+                <FormField
+                  control={form.control}
+                  name="qty_in_stock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stock Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="delivery_cost"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Delivery Cost (R)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="max_per_order"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Max Per Order</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="Maximum items per order"
+                          {...field}
+                          value={field.value === null ? '' : field.value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="commission_value"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commission (R)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              <div className="form-grid-2">
+                <FormField
+                  control={form.control}
+                  name="delivery_cost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Delivery Cost (R)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={form.control}
-            name="short_overview"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Short Overview</FormLabel>
-                <FormControl>
-                  <Input placeholder="Brief product description" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name="commission_value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Commission (R)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
 
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Description</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder="Detailed product description" 
-                    rows={4} 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="short_overview"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Short Overview</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Brief product description" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Product color" {...field} value={field.value || ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Detailed product description" 
+                        rows={4} 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="specifications"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specifications</FormLabel>
-                  <FormControl>
-                    <Input placeholder="E.g. 720ml, 16% ABV" {...field} value={field.value || ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              <div className="form-grid-2">
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Color</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Product color" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={form.control}
-            name="main_image_url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Main Image URL</FormLabel>
-                <FormControl>
-                  <Input placeholder="URL to product image" {...field} value={field.value || ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name="specifications"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Specifications</FormLabel>
+                      <FormControl>
+                        <Input placeholder="E.g. 720ml, 16% ABV" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="max_per_order"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max Per Order</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="Maximum items per order"
-                      {...field}
-                      value={field.value === null ? '' : field.value}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="main_image_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Main Image URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="URL to product image" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="on_homepage"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-6">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value || false}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="font-normal">
-                    Display on homepage
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              <FormField
+                control={form.control}
+                name="on_homepage"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      Display on homepage
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
+          <div className="flex justify-between pt-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentStep === 0}
+              className="btn-cancel flex gap-2"
             >
-              Cancel
+              <ChevronLeft className="h-4 w-4" /> Back
             </Button>
-            <Button type="submit" className="bg-sakewinkel-navy">
-              {isAdd ? "Add Product" : "Save Changes"}
-            </Button>
+            
+            <div className="space-x-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                className="btn-cancel"
+              >
+                Cancel
+              </Button>
+              
+              {currentStep < formSteps.length - 1 ? (
+                <Button 
+                  type="button" 
+                  onClick={handleNext}
+                  className="btn-submit flex gap-2"
+                >
+                  Next <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button type="submit" className="btn-submit">
+                  {isAdd ? "Add Product" : "Save Changes"}
+                </Button>
+              )}
+            </div>
           </div>
         </form>
       </Form>
