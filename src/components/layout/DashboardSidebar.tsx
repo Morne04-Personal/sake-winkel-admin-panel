@@ -6,7 +6,7 @@ import {
   Building2, 
   CalendarDays,
   Settings,
-  BoxCheck 
+  BookCheck 
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,7 +28,7 @@ const menuItems = [
   },
   {
     title: "Order Tracking",
-    icon: BoxCheck,
+    icon: BookCheck,
     url: "/order-tracking",
   },
   {
