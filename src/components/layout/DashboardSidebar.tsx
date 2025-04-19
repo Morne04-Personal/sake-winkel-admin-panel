@@ -1,0 +1,87 @@
+
+import { 
+  LayoutDashboard, 
+  Package, 
+  Users, 
+  Building2, 
+  CalendarDays,
+  Settings
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+
+const menuItems = [
+  {
+    title: "Dashboard",
+    icon: LayoutDashboard,
+    url: "/",
+  },
+  {
+    title: "Products",
+    icon: Package,
+    url: "/products",
+  },
+  {
+    title: "Suppliers",
+    icon: Building2,
+    url: "/suppliers",
+  },
+  {
+    title: "Users",
+    icon: Users,
+    url: "/users",
+  },
+  {
+    title: "Events",
+    icon: CalendarDays,
+    url: "/events",
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    url: "/settings",
+  },
+];
+
+const DashboardSidebar = () => {
+  return (
+    <Sidebar>
+      <SidebarContent>
+        <div className="p-6">
+          <h1 className="text-h2 font-bold text-sakewinkel-navy">SAKEwinkel</h1>
+          <p className="text-small text-sakewinkel-slate">Admin Dashboard</p>
+        </div>
+        <ColorDivider />
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a
+                      href={item.url}
+                      className="flex items-center gap-3 px-4 py-2 text-sakewinkel-slate hover:text-sakewinkel-navy"
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+};
+
+export default DashboardSidebar;
