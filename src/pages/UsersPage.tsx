@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -28,38 +27,26 @@ const UsersPage = () => {
     queryKey: ['roles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('roles')
-        .select('*')
-        .order('id');
+        .from('users')
+        .select('role_id')
+        .order('role_id');
       
       if (error) throw error;
-      return data as Role[];
+      return data;
     },
   });
 
-  // Fetch users with role names
+  // Fetch users
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('users')
-        .select('*, suppliers(id, name)')
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      
-      // Transform data to match our User type
-      return data.map((user: any) => ({
-        id: user.id,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        phone_number: user.phone_number,
-        email: user.email,
-        role_id: user.role_id,
-        supplier_id: user.supplier_id,
-      })) as User[];
+      return data;
     },
   });
 

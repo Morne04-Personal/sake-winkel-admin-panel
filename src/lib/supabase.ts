@@ -7,7 +7,9 @@ export type SignInCredentials = {
   password: string;
 };
 
-export type SignUpCredentials = SignInCredentials & {
+export type SignUpCredentials = {
+  email: string;
+  password: string;
   first_name: string;
   last_name: string;
   phone_number: string;

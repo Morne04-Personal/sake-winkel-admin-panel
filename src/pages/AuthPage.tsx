@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -18,6 +17,7 @@ import { signIn, signUp } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SignInCredentials, SignUpCredentials } from "@/lib/supabase";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -44,7 +44,7 @@ const AuthPage = () => {
     return null;
   }
 
-  const loginForm = useForm<LoginFormValues>({
+  const loginForm = useForm<SignInCredentials>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -52,7 +52,7 @@ const AuthPage = () => {
     },
   });
 
-  const registerForm = useForm<RegisterFormValues>({
+  const registerForm = useForm<SignUpCredentials>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",

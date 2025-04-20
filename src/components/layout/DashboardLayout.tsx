@@ -1,12 +1,12 @@
-
 import DashboardSidebar from "./DashboardSidebar";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMobile } from "@/hooks/use-mobile";
+import { useMobile as useIsMobile } from "@/hooks/use-mobile";
 import { signOut } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { type SidebarProps } from "@/components/ui/sidebar";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,11 +14,16 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const { user } = useAuth();
 
   const handleSignOut = () => {
     signOut();
+  };
+
+  const sidebarProps: SidebarProps = {
+    isOpen: sidebarOpen,
+    onOpenChange: setSidebarOpen,
   };
 
   return (
@@ -31,7 +36,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      <DashboardSidebar {...sidebarProps} />
 
       <div
         className={cn(
