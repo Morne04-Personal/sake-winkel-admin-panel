@@ -1,4 +1,4 @@
-import { Role, Supplier, User } from "@/types";
+import { Role, Supplier, User, Product, Event } from "@/types";
 
 export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -148,5 +148,90 @@ export const mockUsers: User[] = [
     street_address: null,
     entity_id: null,
     town_name: null,
+  },
+];
+
+export const formatCurrency = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+};
+
+export const mockProducts: Product[] = [
+  {
+    id: 1,
+    name: "Sake Winkel T-Shirt",
+    description: "High-quality cotton t-shirt with Sake Winkel logo",
+    original_price: 250,
+    sale_price: 200,
+    qty_in_stock: 50,
+    supplier_id: 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    name: "Sake Winkel Mug",
+    description: "Ceramic mug with Sake Winkel design",
+    original_price: 100,
+    sale_price: 80,
+    qty_in_stock: 100,
+    supplier_id: 2,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    name: "Sake Winkel Cap",
+    description: "Adjustable cap with Sake Winkel embroidery",
+    original_price: 150,
+    sale_price: 120,
+    qty_in_stock: 75,
+    supplier_id: 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+export const mockEvents: Event[] = [
+  {
+    id: 1,
+    name: "Sake Tasting",
+    description: "An evening of sake tasting and education",
+    start_date: new Date().toISOString(),
+    end_date: new Date().toISOString(),
+    city: "Cape Town",
+    original_price: 300,
+    sale_price: 250,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    name: "Sushi and Sake Pairing",
+    description: "Learn how to pair sushi with different types of sake",
+    start_date: new Date().toISOString(),
+    end_date: new Date().toISOString(),
+    city: "Johannesburg",
+    original_price: 400,
+    sale_price: 350,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    name: "Sake Brewing Workshop",
+    description: "A hands-on workshop on the art of sake brewing",
+    start_date: new Date().toISOString(),
+    end_date: new Date().toISOString(),
+    city: "Durban",
+    original_price: 500,
+    sale_price: 450,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];
