@@ -1,13 +1,14 @@
+
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import UserTable from "@/components/users/UserTable";
 import UserForm from "@/components/users/UserForm";
-import { User, Role } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import { User } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
+import { mockUsers, mockRoles } from "@/data/mockData";
 
 const UsersPage = () => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -15,45 +16,37 @@ const UsersPage = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch roles
-  const { data: roles = [] } = useQuery({
+  // For now, use mock data instead of Supabase queries
+  const { data: roles = mockRoles, isLoading: isRolesLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('roles')
-        .select('*')
-        .order('id');
-      
-      if (error) throw error;
-      return data as Role[];
+      // This is temporarily returning mock data
+      // In a real application, this would fetch from Supabase
+      return mockRoles;
     },
   });
 
   // Fetch users
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = mockUsers, isLoading: isUsersLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as User[];
+      // This is temporarily returning mock data
+      // In a real application, this would fetch from Supabase
+      return mockUsers;
     },
   });
 
-  // Add user mutation
+  // Add user mutation - mocked for now
   const addUserMutation = useMutation({
     mutationFn: async (user: Omit<User, "id" | "created_at" | "updated_at">) => {
-      const { data, error } = await supabase
-        .from('users')
-        .insert([user])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      // Mock adding a user - in a real app, this would call Supabase
+      const newUser: User = {
+        ...user,
+        id: `${mockUsers.length + 1}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      return newUser;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -69,26 +62,11 @@ const UsersPage = () => {
     }
   });
 
-  // Update user mutation
+  // Update user mutation - mocked for now
   const updateUserMutation = useMutation({
     mutationFn: async (user: User) => {
-      const { data, error } = await supabase
-        .from('users')
-        .update({
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          phone_number: user.phone_number,
-          role_id: user.role_id,
-          supplier_id: user.supplier_id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      // Mock updating a user - in a real app, this would call Supabase
+      return user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -105,15 +83,11 @@ const UsersPage = () => {
     }
   });
 
-  // Delete user mutation
+  // Delete user mutation - mocked for now
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      // Mock deleting a user - in a real app, this would call Supabase
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -161,7 +135,7 @@ const UsersPage = () => {
           </Button>
         </div>
 
-        {isLoading ? (
+        {isUsersLoading ? (
           <div className="flex justify-center items-center h-40">Loading users...</div>
         ) : (
           <UserTable

@@ -1,3 +1,4 @@
+
 import { Role, Supplier, User, Product, Event } from "@/types";
 
 export const formatDate = (dateString: string): string => {
@@ -7,6 +8,16 @@ export const formatDate = (dateString: string): string => {
     month: 'long',
     day: 'numeric',
   });
+};
+
+export const formatCurrency = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
 };
 
 export const mockRoles: Role[] = [
@@ -151,16 +162,6 @@ export const mockUsers: User[] = [
   },
 ];
 
-export const formatCurrency = (value: number | null | undefined): string => {
-  if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat('en-ZA', {
-    style: 'currency',
-    currency: 'ZAR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value);
-};
-
 export const mockProducts: Product[] = [
   {
     id: 1,
@@ -172,6 +173,14 @@ export const mockProducts: Product[] = [
     supplier_id: 1,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    delivery_cost: 0,
+    commission_value: 0,
+    short_overview: null,
+    color: null,
+    specifications: null,
+    main_image_url: null,
+    on_homepage: null,
+    max_per_order: null
   },
   {
     id: 2,
@@ -183,6 +192,14 @@ export const mockProducts: Product[] = [
     supplier_id: 2,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    delivery_cost: 0,
+    commission_value: 0,
+    short_overview: null,
+    color: null,
+    specifications: null,
+    main_image_url: null,
+    on_homepage: null,
+    max_per_order: null
   },
   {
     id: 3,
@@ -194,6 +211,14 @@ export const mockProducts: Product[] = [
     supplier_id: 1,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    delivery_cost: 0,
+    commission_value: 0,
+    short_overview: null,
+    color: null,
+    specifications: null,
+    main_image_url: null,
+    on_homepage: null,
+    max_per_order: null
   },
 ];
 
@@ -201,37 +226,52 @@ export const mockEvents: Event[] = [
   {
     id: 1,
     name: "Sake Tasting",
-    description: "An evening of sake tasting and education",
+    short_description: "An evening of sake tasting and education",
     start_date: new Date().toISOString(),
     end_date: new Date().toISOString(),
     city: "Cape Town",
     original_price: 300,
     sale_price: 250,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    address: null,
+    venue_name: null,
+    ticket_url: null,
+    thumbnail_url: null,
+    logo_url: null,
+    is_featured: null
   },
   {
     id: 2,
     name: "Sushi and Sake Pairing",
-    description: "Learn how to pair sushi with different types of sake",
+    short_description: "Learn how to pair sushi with different types of sake",
     start_date: new Date().toISOString(),
     end_date: new Date().toISOString(),
     city: "Johannesburg",
     original_price: 400,
     sale_price: 350,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    address: null,
+    venue_name: null,
+    ticket_url: null,
+    thumbnail_url: null,
+    logo_url: null,
+    is_featured: null
   },
   {
     id: 3,
     name: "Sake Brewing Workshop",
-    description: "A hands-on workshop on the art of sake brewing",
+    short_description: "A hands-on workshop on the art of sake brewing",
     start_date: new Date().toISOString(),
     end_date: new Date().toISOString(),
     city: "Durban",
     original_price: 500,
     sale_price: 450,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    address: null,
+    venue_name: null,
+    ticket_url: null,
+    thumbnail_url: null,
+    logo_url: null,
+    is_featured: null
   },
 ];

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -44,7 +45,7 @@ const AuthPage = () => {
     return null;
   }
 
-  const loginForm = useForm<SignInCredentials>({
+  const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -52,7 +53,7 @@ const AuthPage = () => {
     },
   });
 
-  const registerForm = useForm<SignUpCredentials>({
+  const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
@@ -65,7 +66,7 @@ const AuthPage = () => {
 
   const handleLogin = async (values: LoginFormValues) => {
     setIsLoading(true);
-    const { data, error } = await signIn(values);
+    const { data, error } = await signIn(values as SignInCredentials);
     if (data && !error) {
       navigate("/");
     }
@@ -74,7 +75,7 @@ const AuthPage = () => {
 
   const handleRegister = async (values: RegisterFormValues) => {
     setIsLoading(true);
-    await signUp(values);
+    await signUp(values as SignUpCredentials);
     setIsLoading(false);
   };
 

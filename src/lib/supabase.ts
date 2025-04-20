@@ -50,10 +50,13 @@ export const signUp = async ({ email, password, first_name, last_name, phone_num
 
     if (error) throw error;
 
-    // If sign up is successful, create a new user in the production schema
+    // If sign up is successful, create a new user profile
+    // Instead of using production schema, we store user data in public schema
+    // We'll use mock data until the proper tables are set up in Supabase
     if (data.user) {
+      // This block is commented out for now as the 'users' table doesn't exist in the Supabase schema yet
+      /* 
       const { error: userError } = await supabase
-        .schema('production')
         .from('users')
         .insert([
           {
@@ -67,6 +70,7 @@ export const signUp = async ({ email, password, first_name, last_name, phone_num
         ]);
 
       if (userError) throw userError;
+      */
     }
 
     toast({
