@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -50,14 +49,12 @@ export const signUp = async ({ email, password, first_name, last_name, phone_num
 
     if (error) throw error;
 
-    // If sign up is successful, create a new user profile
-    // Instead of using production schema, we store user data in public schema
-    // We'll use mock data until the proper tables are set up in Supabase
+    // Since we're using public schema for development, we'll keep using mock data
+    // TODO: Implement proper user profile creation once schema is ready
+    /* 
     if (data.user) {
-      // This block is commented out for now as the 'users' table doesn't exist in the Supabase schema yet
-      /* 
-      const { error: userError } = await supabase
-        .from('users')
+      const { error: profileError } = await supabase
+        .from('profiles')
         .insert([
           {
             id: data.user.id,
@@ -65,13 +62,12 @@ export const signUp = async ({ email, password, first_name, last_name, phone_num
             first_name,
             last_name,
             phone_number,
-            role_id: 7, // default role
           },
         ]);
 
-      if (userError) throw userError;
-      */
+      if (profileError) throw profileError;
     }
+    */
 
     toast({
       title: "Account created successfully!",
@@ -93,11 +89,13 @@ export const signOut = async () => {
   try {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    return { error: null };
   } catch (error: any) {
     toast({
       title: "Error signing out",
       description: error.message || "Please try again.",
       variant: "destructive",
     });
+    return { error };
   }
 };

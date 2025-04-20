@@ -7,19 +7,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { User } from "@/types";
 import { formatDate } from "@/data/mockData";
+import TableLoader from "@/components/common/TableLoader";
+import ActionButton from "@/components/common/ActionButton";
 
 interface UserTableProps {
   users: User[];
   getRoleName: (roleId: number) => string;
   onEdit: (user: User) => void;
   onDelete: (id: string) => void;
+  isLoading?: boolean;
 }
 
-const UserTable = ({ users, getRoleName, onEdit, onDelete }: UserTableProps) => {
+const UserTable = ({ users, getRoleName, onEdit, onDelete, isLoading }: UserTableProps) => {
   return (
     <div className="rounded-md border">
       <Table>
@@ -34,7 +36,9 @@ const UserTable = ({ users, getRoleName, onEdit, onDelete }: UserTableProps) => 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.length === 0 ? (
+          {isLoading ? (
+            <TableLoader colSpan={6} />
+          ) : users.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center">
                 No users found.
@@ -50,24 +54,17 @@ const UserTable = ({ users, getRoleName, onEdit, onDelete }: UserTableProps) => 
                 <TableCell>{formatDate(user.created_at)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <ActionButton
                       onClick={() => onEdit(user)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                      icon={Edit}
+                      label="Edit"
+                    />
+                    <ActionButton
                       onClick={() => onDelete(user.id)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
+                      icon={Trash2}
+                      label="Delete"
+                      variant="ghost"
+                    />
                   </div>
                 </TableCell>
               </TableRow>
