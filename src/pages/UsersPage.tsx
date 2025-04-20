@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import UserTable from "@/components/users/UserTable";
 import UserForm from "@/components/users/UserForm";
-import { User } from "@/types";
+import { User, Role } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
@@ -21,13 +20,12 @@ const UsersPage = () => {
     queryKey: ['roles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('production')
         .from('roles')
         .select('*')
         .order('id');
       
       if (error) throw error;
-      return data;
+      return data as Role[];
     },
   });
 
@@ -36,7 +34,6 @@ const UsersPage = () => {
     queryKey: ['users'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('production')
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
@@ -50,7 +47,6 @@ const UsersPage = () => {
   const addUserMutation = useMutation({
     mutationFn: async (user: Omit<User, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
-        .schema('production')
         .from('users')
         .insert([user])
         .select()
@@ -77,7 +73,6 @@ const UsersPage = () => {
   const updateUserMutation = useMutation({
     mutationFn: async (user: User) => {
       const { data, error } = await supabase
-        .schema('production')
         .from('users')
         .update({
           first_name: user.first_name,

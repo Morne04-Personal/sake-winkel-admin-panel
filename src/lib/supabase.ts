@@ -50,6 +50,25 @@ export const signUp = async ({ email, password, first_name, last_name, phone_num
 
     if (error) throw error;
 
+    // If sign up is successful, create a new user in the production schema
+    if (data.user) {
+      const { error: userError } = await supabase
+        .schema('production')
+        .from('users')
+        .insert([
+          {
+            id: data.user.id,
+            email,
+            first_name,
+            last_name,
+            phone_number,
+            role_id: 7, // default role
+          },
+        ]);
+
+      if (userError) throw userError;
+    }
+
     toast({
       title: "Account created successfully!",
       description: "Please check your email to verify your account.",
