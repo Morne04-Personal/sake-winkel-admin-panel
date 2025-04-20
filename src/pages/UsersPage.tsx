@@ -1,44 +1,161 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import UserTable from "@/components/users/UserTable";
 import UserForm from "@/components/users/UserForm";
-import { mockUsers, mockRoles } from "@/data/mockData";
 import { User } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
+
+// Type for the roles from the database
+interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+}
 
 const UsersPage = () => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
-  const handleAddUser = (user: User) => {
-    const newUser = {
-      ...user,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setUsers([...users, newUser]);
-    setIsAddFormOpen(false);
+  // Fetch roles
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('roles')
+        .select('*')
+        .order('id');
+      
+      if (error) throw error;
+      return data as Role[];
+    },
+  });
+
+  // Fetch users with role names
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*, suppliers(id, name)')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Transform data to match our User type
+      return data.map((user: any) => ({
+        id: user.id,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        phone_number: user.phone_number,
+        email: user.email,
+        role_id: user.role_id,
+        supplier_id: user.supplier_id,
+      })) as User[];
+    },
+  });
+
+  // Add user mutation
+  const addUserMutation = useMutation({
+    mutationFn: async (user: Omit<User, "id" | "created_at" | "updated_at">) => {
+      const { data, error } = await supabase
+        .from('users')
+        .insert([user])
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({ title: "User added successfully" });
+      setIsAddFormOpen(false);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error adding user", 
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async (user: User) => {
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone_number: user.phone_number,
+          role_id: user.role_id,
+          supplier_id: user.supplier_id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({ title: "User updated successfully" });
+      setIsEditFormOpen(false);
+      setCurrentUser(null);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error updating user", 
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({ title: "User deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error deleting user", 
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleAddUser = (user: Omit<User, "id" | "created_at" | "updated_at">) => {
+    addUserMutation.mutate(user);
   };
 
-  const handleEditUser = (updatedUser: User) => {
-    setUsers(
-      users.map((u) =>
-        u.id === updatedUser.id
-          ? { ...updatedUser, updated_at: new Date().toISOString() }
-          : u
-      )
-    );
-    setIsEditFormOpen(false);
-    setCurrentUser(null);
+  const handleEditUser = (user: User) => {
+    updateUserMutation.mutate(user);
   };
 
   const handleDeleteUser = (id: string) => {
-    setUsers(users.filter((u) => u.id !== id));
+    deleteUserMutation.mutate(id);
   };
 
   const openEditForm = (user: User) => {
@@ -47,7 +164,7 @@ const UsersPage = () => {
   };
 
   const getRoleNameById = (roleId: number) => {
-    const role = mockRoles.find((role) => role.id === roleId);
+    const role = roles.find((r) => r.id === roleId);
     return role ? role.name : "Unknown Role";
   };
 
@@ -62,12 +179,16 @@ const UsersPage = () => {
           </Button>
         </div>
 
-        <UserTable
-          users={users}
-          getRoleName={getRoleNameById}
-          onEdit={openEditForm}
-          onDelete={handleDeleteUser}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-40">Loading users...</div>
+        ) : (
+          <UserTable
+            users={users}
+            getRoleName={getRoleNameById}
+            onEdit={openEditForm}
+            onDelete={handleDeleteUser}
+          />
+        )}
 
         {isAddFormOpen && (
           <UserForm

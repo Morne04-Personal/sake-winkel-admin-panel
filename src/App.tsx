@@ -11,6 +11,8 @@ import EventsPage from "./pages/EventsPage";
 import UsersPage from "./pages/UsersPage";
 import NotFound from "./pages/NotFound";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
+import AuthPage from "./pages/AuthPage";
+import { AuthProvider, RequireAuth } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -20,15 +22,60 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/suppliers" element={<SuppliersPage />} />
-          <Route path="/events" element={<EventsPage />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/order-tracking" element={<OrderTrackingPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route 
+              path="/" 
+              element={
+                <RequireAuth>
+                  <Index />
+                </RequireAuth>
+              } 
+            />
+            <Route 
+              path="/products" 
+              element={
+                <RequireAuth>
+                  <ProductsPage />
+                </RequireAuth>
+              } 
+            />
+            <Route 
+              path="/suppliers" 
+              element={
+                <RequireAuth>
+                  <SuppliersPage />
+                </RequireAuth>
+              } 
+            />
+            <Route 
+              path="/events" 
+              element={
+                <RequireAuth>
+                  <EventsPage />
+                </RequireAuth>
+              } 
+            />
+            <Route 
+              path="/users" 
+              element={
+                <RequireAuth>
+                  <UsersPage />
+                </RequireAuth>
+              } 
+            />
+            <Route 
+              path="/order-tracking" 
+              element={
+                <RequireAuth>
+                  <OrderTrackingPage />
+                </RequireAuth>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
