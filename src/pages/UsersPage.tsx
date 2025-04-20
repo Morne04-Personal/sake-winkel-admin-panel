@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -8,13 +9,6 @@ import { User } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
-
-// Type for the roles from the database
-interface Role {
-  id: number;
-  name: string;
-  description: string | null;
-}
 
 const UsersPage = () => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -27,9 +21,10 @@ const UsersPage = () => {
     queryKey: ['roles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('users')
-        .select('role_id')
-        .order('role_id');
+        .schema('production')
+        .from('roles')
+        .select('*')
+        .order('id');
       
       if (error) throw error;
       return data;
@@ -41,12 +36,13 @@ const UsersPage = () => {
     queryKey: ['users'],
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema('production')
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as User[];
     },
   });
 
@@ -54,19 +50,21 @@ const UsersPage = () => {
   const addUserMutation = useMutation({
     mutationFn: async (user: Omit<User, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
+        .schema('production')
         .from('users')
         .insert([user])
-        .select();
+        .select()
+        .single();
       
       if (error) throw error;
-      return data[0];
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({ title: "User added successfully" });
       setIsAddFormOpen(false);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({ 
         title: "Error adding user", 
         description: error.message,
@@ -79,6 +77,7 @@ const UsersPage = () => {
   const updateUserMutation = useMutation({
     mutationFn: async (user: User) => {
       const { data, error } = await supabase
+        .schema('production')
         .from('users')
         .update({
           first_name: user.first_name,
@@ -90,10 +89,11 @@ const UsersPage = () => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id)
-        .select();
+        .select()
+        .single();
       
       if (error) throw error;
-      return data[0];
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -101,7 +101,7 @@ const UsersPage = () => {
       setIsEditFormOpen(false);
       setCurrentUser(null);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({ 
         title: "Error updating user", 
         description: error.message,

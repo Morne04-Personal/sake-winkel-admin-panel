@@ -1,4 +1,3 @@
-
 export interface Product {
   id: number;
   supplier_id: number;
@@ -58,6 +57,14 @@ export interface Event {
   created_at: string;
 }
 
+export interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export interface User {
   id: string;
   created_at: string;
@@ -68,10 +75,10 @@ export interface User {
   email: string;
   role_id: number;
   supplier_id: number | null;
-}
-
-export interface Role {
-  id: number;
-  name: string;
-  description: string | null;
+  id_number: string | null;
+  entity_reference: string | null;
+  entity_account_id: string | null;
+  street_address: string | null;
+  entity_id: string | null;
+  town_name: string | null;
 }
