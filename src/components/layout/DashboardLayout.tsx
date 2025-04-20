@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMobile as useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { signOut } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { type SidebarProps } from "@/components/ui/sidebar";
