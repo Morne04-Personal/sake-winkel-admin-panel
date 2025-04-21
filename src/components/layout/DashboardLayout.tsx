@@ -24,7 +24,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={sidebarOpen} onOpenChange={setSidebarOpen}>
-      <div className="min-h-screen bg-gray-100">
+      <div className="flex min-h-screen w-full bg-gray-100">
         <div
           className={cn(
             "fixed inset-0 bg-gray-800/60 z-40 lg:hidden",
@@ -37,7 +37,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <div
           className={cn(
-            "lg:pl-72 flex flex-col flex-1 min-h-screen transition-all duration-300"
+            "flex flex-col flex-1 min-h-screen transition-all duration-300",
+            isMobile ? "w-full" : "lg:pl-72"
           )}
         >
           <header className="sticky top-0 z-30 bg-white shadow-sm">

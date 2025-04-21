@@ -12,6 +12,7 @@ import UsersPage from "./pages/UsersPage";
 import NotFound from "./pages/NotFound";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
 import AuthPage from "./pages/AuthPage";
+import SettingsPage from "./pages/SettingsPage";
 import { AuthProvider, RequireAuth } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,14 @@ const App = () => (
               element={
                 <RequireAuth>
                   <OrderTrackingPage />
+                </RequireAuth>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <RequireAuth>
+                  <SettingsPage />
                 </RequireAuth>
               } 
             />

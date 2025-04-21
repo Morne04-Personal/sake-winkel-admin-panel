@@ -18,6 +18,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import ColorDivider from "../ColorDivider";
+import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const menuItems = [
   {
@@ -58,6 +60,8 @@ const menuItems = [
 ];
 
 const DashboardSidebar = () => {
+  const location = useLocation();
+  
   return (
     <Sidebar>
       <SidebarContent>
@@ -71,14 +75,17 @@ const DashboardSidebar = () => {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a
-                      href={item.url}
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={location.pathname === item.url}
+                  >
+                    <Link
+                      to={item.url}
                       className="flex items-center gap-3 px-4 py-2 text-sakewinkel-slate hover:text-sakewinkel-navy"
                     >
                       <item.icon className="w-5 h-5" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

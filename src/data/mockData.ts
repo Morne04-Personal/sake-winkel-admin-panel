@@ -1,5 +1,7 @@
-import { User, Role, Product, Supplier, Event } from "@/types";
 
+import { User, Role, Supplier, Product, Event } from "@/types";
+
+// Mock users data
 export const mockUsers: User[] = [
   {
     id: "1",
@@ -8,211 +10,268 @@ export const mockUsers: User[] = [
     email: "john.doe@example.com",
     phone_number: "123-456-7890",
     role_id: 1,
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
+    created_at: "2023-01-01T00:00:00Z",
+    updated_at: "2023-01-01T00:00:00Z",
+    supplier_id: null,
+    id_number: null,
+    entity_reference: null,
+    entity_account_id: null,
+    entity_id: null,
+    street_address: null,
+    town_name: null
   },
   {
     id: "2",
     first_name: "Jane",
     last_name: "Smith",
     email: "jane.smith@example.com",
-    phone_number: "987-654-3210",
+    phone_number: "234-567-8901",
     role_id: 2,
-    created_at: "2024-01-02T00:00:00Z",
-    updated_at: "2024-01-02T00:00:00Z",
+    created_at: "2023-01-02T00:00:00Z",
+    updated_at: "2023-01-02T00:00:00Z",
+    supplier_id: 1,
+    id_number: "ID123456",
+    entity_reference: "REF001",
+    entity_account_id: "ACC001",
+    entity_id: "ENT001",
+    street_address: "123 Main St",
+    town_name: "Downtown"
   },
   {
     id: "3",
-    first_name: "Alice",
+    first_name: "Bob",
     last_name: "Johnson",
-    email: "alice.johnson@example.com",
-    phone_number: "555-123-4567",
+    email: "bob.johnson@example.com",
+    phone_number: "345-678-9012",
     role_id: 3,
-    created_at: "2024-01-03T00:00:00Z",
-    updated_at: "2024-01-03T00:00:00Z",
-  },
+    created_at: "2023-01-03T00:00:00Z",
+    updated_at: "2023-01-03T00:00:00Z",
+    supplier_id: null,
+    id_number: null,
+    entity_reference: null,
+    entity_account_id: null,
+    entity_id: null,
+    street_address: null,
+    town_name: null
+  }
 ];
 
+// Mock roles data
 export const mockRoles: Role[] = [
   {
     id: 1,
     name: "Admin",
+    description: "Full access to all functionalities",
+    created_at: "2023-01-01T00:00:00Z",
+    updated_at: "2023-01-01T00:00:00Z"
   },
   {
     id: 2,
-    name: "Manager",
+    name: "Supplier",
+    description: "Access to supplier functionalities",
+    created_at: "2023-01-01T00:00:00Z",
+    updated_at: "2023-01-01T00:00:00Z"
   },
   {
     id: 3,
     name: "Customer",
-  },
+    description: "Limited access to view products and place orders",
+    created_at: "2023-01-01T00:00:00Z",
+    updated_at: "2023-01-01T00:00:00Z"
+  }
 ];
 
+// Mock product data
 export const mockProducts: Product[] = [
   {
     id: 1,
+    name: "Premium Sake",
     supplier_id: 1,
-    name: "Premium Sake Set",
-    original_price: 299.99,
-    sale_price: 249.99,
-    qty_in_stock: 50,
-    delivery_cost: 15,
-    commission_value: 30,
-    short_overview: "Traditional Japanese sake set",
-    description: "Premium quality sake set with traditional designs",
-    color: "White",
-    specifications: "4 cups, 1 server",
-    main_image_url: "https://example.com/sake-set.jpg",
+    sale_price: 39.99,
+    original_price: 49.99,
+    qty_in_stock: 100,
+    delivery_cost: 5.99,
+    commission_value: 2.5,
+    short_overview: "Premium quality sake imported from Japan",
+    description: "This premium sake is brewed using traditional methods and high-quality rice.",
+    color: null,
+    specifications: "Alcohol content: 15%, Volume: 750ml",
+    main_image_url: "/placeholder.svg",
     on_homepage: true,
-    max_per_order: 2,
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    max_per_order: 5,
+    created_at: "2023-01-01T00:00:00Z",
+    updated_at: "2023-01-02T00:00:00Z"
   },
   {
     id: 2,
+    name: "Junmai Daiginjo",
     supplier_id: 2,
-    name: "Craft Beer Selection",
-    original_price: 149.99,
-    sale_price: 129.99,
-    qty_in_stock: 80,
-    delivery_cost: 10,
-    commission_value: 20,
-    short_overview: "Variety of craft beers",
-    description: "Selection of different craft beers from around the world",
-    color: "Mixed",
-    specifications: "6 bottles, assorted styles",
-    main_image_url: "https://example.com/craft-beer.jpg",
-    on_homepage: false,
-    max_per_order: 5,
-    created_at: "2024-01-05T00:00:00Z",
-    updated_at: "2024-01-05T00:00:00Z"
+    sale_price: 59.99,
+    original_price: 69.99,
+    qty_in_stock: 50,
+    delivery_cost: 6.99,
+    commission_value: 3.0,
+    short_overview: "Ultra-premium sake with fruity notes",
+    description: "Junmai Daiginjo is the highest grade of sake with at least 50% of the rice polished away.",
+    color: null,
+    specifications: "Alcohol content: 16%, Volume: 720ml",
+    main_image_url: "/placeholder.svg",
+    on_homepage: true,
+    max_per_order: 3,
+    created_at: "2023-01-05T00:00:00Z",
+    updated_at: "2023-01-06T00:00:00Z"
   },
   {
     id: 3,
-    supplier_id: 1,
-    name: "Artisanal Wine Collection",
-    original_price: 399.99,
-    sale_price: 349.99,
-    qty_in_stock: 30,
-    delivery_cost: 20,
-    commission_value: 40,
-    short_overview: "Exclusive wine selection",
-    description: "Collection of rare and artisanal wines from top vineyards",
-    color: "Red",
-    specifications: "3 bottles, vintage 2015",
-    main_image_url: "https://example.com/wine-collection.jpg",
-    on_homepage: true,
-    max_per_order: 1,
-    created_at: "2024-01-10T00:00:00Z",
-    updated_at: "2024-01-10T00:00:00Z"
-  },
+    name: "Honjozo Sake",
+    supplier_id: 3,
+    sale_price: 29.99,
+    original_price: 34.99,
+    qty_in_stock: 150,
+    delivery_cost: 4.99,
+    commission_value: 2.0,
+    short_overview: "Everyday drinking sake with a light profile",
+    description: "Honjozo is a versatile sake that works well both warm and chilled.",
+    color: null,
+    specifications: "Alcohol content: 14.5%, Volume: 750ml",
+    main_image_url: "/placeholder.svg",
+    on_homepage: false,
+    max_per_order: 10,
+    created_at: "2023-01-10T00:00:00Z",
+    updated_at: "2023-01-11T00:00:00Z"
+  }
 ];
 
+// Mock supplier data
 export const mockSuppliers: Supplier[] = [
   {
     id: 1,
-    name: "Sake Heaven",
-    trading_as: "Sake Imports",
-    identification_number: "SAKE123",
+    name: "Tokyo Breweries",
+    trading_as: "Tokyo Sake Co.",
+    identification_number: "JP12345678",
+    entity_type: "Corporation",
+    identification_type: "Business Registration",
+    is_vat_exempt: false,
+    vat_exemption_proof_url: null,
     is_vat_registered: true,
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
+    vat_number: "VAT123456789",
+    industry_sector: "Food & Beverage",
+    cluster_grouping: "Alcoholic Beverages",
+    zone: "Asia-Pacific",
+    description: "Leading sake producer from Tokyo region",
+    comments: null,
+    logo_url: "/placeholder.svg",
+    settlement_bank_choice: "Direct Deposit",
+    business_description_role: "Manufacturer",
+    declaration_name: "Tanaka Hiroshi",
+    declaration_signed: true,
+    declaration_date: "2022-12-01T00:00:00Z",
+    created_at: "2023-01-01T00:00:00Z",
+    updated_at: "2023-01-01T00:00:00Z"
   },
   {
     id: 2,
-    name: "Brew Master",
-    trading_as: "Craft Beer Suppliers",
-    identification_number: "BREW456",
+    name: "Kyoto Traditional",
+    trading_as: "Kyoto Sake House",
+    identification_number: "JP87654321",
+    entity_type: "Partnership",
+    identification_type: "Business Registration",
+    is_vat_exempt: false,
+    vat_exemption_proof_url: null,
     is_vat_registered: false,
-    created_at: "2024-01-05T00:00:00Z",
-    updated_at: "2024-01-05T00:00:00Z",
+    vat_number: null,
+    industry_sector: "Food & Beverage",
+    cluster_grouping: "Alcoholic Beverages",
+    zone: "Asia-Pacific",
+    description: "Artisanal sake from Kyoto's historical district",
+    comments: null,
+    logo_url: "/placeholder.svg",
+    settlement_bank_choice: "Wire Transfer",
+    business_description_role: "Manufacturer",
+    declaration_name: "Yamamoto Kenji",
+    declaration_signed: true,
+    declaration_date: "2022-12-05T00:00:00Z",
+    created_at: "2023-01-03T00:00:00Z",
+    updated_at: "2023-01-03T00:00:00Z"
   },
   {
     id: 3,
-    name: "Vineyard Select",
-    trading_as: "Fine Wine Distributors",
-    identification_number: "VINE789",
+    name: "Niigata Valley",
+    trading_as: "Niigata Premium Sake",
+    identification_number: "JP45678901",
+    entity_type: "Limited Company",
+    identification_type: "Business Registration",
+    is_vat_exempt: false,
+    vat_exemption_proof_url: null,
     is_vat_registered: true,
-    created_at: "2024-01-10T00:00:00Z",
-    updated_at: "2024-01-10T00:00:00Z",
-  },
+    vat_number: "VAT987654321",
+    industry_sector: "Food & Beverage",
+    cluster_grouping: "Alcoholic Beverages",
+    zone: "Asia-Pacific",
+    description: "Premium sake from the Niigata region, known for pure water",
+    comments: null,
+    logo_url: "/placeholder.svg",
+    settlement_bank_choice: "Direct Deposit",
+    business_description_role: "Manufacturer",
+    declaration_name: "Suzuki Akira",
+    declaration_signed: true,
+    declaration_date: "2022-12-10T00:00:00Z",
+    created_at: "2023-01-05T00:00:00Z",
+    updated_at: "2023-01-05T00:00:00Z"
+  }
 ];
 
+// Mock events data
 export const mockEvents: Event[] = [
   {
     id: 1,
-    name: "Sake Tasting Evening",
-    short_description: "Join us for an evening of premium sake tasting",
-    start_date: "2024-05-01T18:00:00Z",
-    end_date: "2024-05-01T21:00:00Z",
-    city: "Cape Town",
-    address: "123 Sake Street",
-    venue_name: "Sake Lounge",
-    original_price: 150,
-    sale_price: 120,
-    ticket_url: "https://example.com/tickets/1",
-    thumbnail_url: "https://example.com/event1.jpg",
-    logo_url: "https://example.com/logo1.jpg",
+    name: "Tokyo Sake Festival",
+    short_description: "Annual celebration of Japan's finest sake",
+    start_date: "2023-04-15T10:00:00Z",
+    end_date: "2023-04-17T18:00:00Z",
+    city: "Tokyo",
+    address: "Tokyo Exhibition Center, 1-2-3 Marunouchi",
+    venue_name: "Tokyo Exhibition Center",
+    original_price: 25.00,
+    sale_price: 20.00,
+    ticket_url: "https://example.com/tickets/tokyo-sake-festival",
+    thumbnail_url: "/placeholder.svg",
+    logo_url: "/placeholder.svg",
     is_featured: true,
-    created_at: "2024-01-01T00:00:00Z",
+    created_at: "2023-01-15T00:00:00Z"
   },
   {
     id: 2,
-    name: "Craft Beer Festival",
-    short_description: "Experience the best craft beers from local breweries",
-    start_date: "2024-06-15T12:00:00Z",
-    end_date: "2024-06-15T22:00:00Z",
-    city: "Johannesburg",
-    address: "456 Beer Avenue",
-    venue_name: "Brew Fest Arena",
-    original_price: 100,
-    sale_price: 80,
-    ticket_url: "https://example.com/tickets/2",
-    thumbnail_url: "https://example.com/event2.jpg",
-    logo_url: "https://example.com/logo2.jpg",
+    name: "Sake Tasting Masterclass",
+    short_description: "Learn to appreciate premium sake with expert guidance",
+    start_date: "2023-05-20T18:30:00Z",
+    end_date: "2023-05-20T21:30:00Z",
+    city: "Osaka",
+    address: "Osaka Cultural Center, 4-5-6 Umeda",
+    venue_name: "Osaka Cultural Center",
+    original_price: 45.00,
+    sale_price: 39.99,
+    ticket_url: "https://example.com/tickets/sake-masterclass",
+    thumbnail_url: "/placeholder.svg",
+    logo_url: "/placeholder.svg",
     is_featured: false,
-    created_at: "2024-01-05T00:00:00Z",
+    created_at: "2023-02-01T00:00:00Z"
   },
   {
     id: 3,
-    name: "Wine and Cheese Pairing",
-    short_description: "Indulge in a sophisticated wine and cheese pairing event",
-    start_date: "2024-07-20T19:00:00Z",
-    end_date: "2024-07-20T23:00:00Z",
-    city: "Stellenbosch",
-    address: "789 Wine Road",
-    venue_name: "Wine Estate Cellar",
-    original_price: 200,
-    sale_price: 180,
-    ticket_url: "https://example.com/tickets/3",
-    thumbnail_url: "https://example.com/event3.jpg",
-    logo_url: "https://example.com/logo3.jpg",
+    name: "Sake and Food Pairing Workshop",
+    short_description: "Discover perfect food pairings for different sake varieties",
+    start_date: "2023-06-10T19:00:00Z",
+    end_date: "2023-06-10T22:00:00Z",
+    city: "Kyoto",
+    address: "Kyoto Culinary Academy, 7-8-9 Gion",
+    venue_name: "Kyoto Culinary Academy",
+    original_price: 55.00,
+    sale_price: 49.99,
+    ticket_url: "https://example.com/tickets/sake-food-pairing",
+    thumbnail_url: "/placeholder.svg",
+    logo_url: "/placeholder.svg",
     is_featured: true,
-    created_at: "2024-01-10T00:00:00Z",
-  },
+    created_at: "2023-02-15T00:00:00Z"
+  }
 ];
-
-// Add proper error handling for date formatting
-export const formatDate = (dateString: string | null): string => {
-  if (!dateString) return "N/A";
-  try {
-    return new Date(dateString).toLocaleDateString();
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return "Invalid date";
-  }
-};
-
-// Add proper currency formatting
-export const formatCurrency = (amount: number | null): string => {
-  if (amount === null) return "N/A";
-  try {
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR'
-    }).format(amount);
-  } catch (error) {
-    console.error("Error formatting currency:", error);
-    return "Invalid amount";
-  }
-};
