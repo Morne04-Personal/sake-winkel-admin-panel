@@ -16,12 +16,13 @@ const EventsPage = () => {
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
 
-  // Fetch events from Supabase
+  // Fetch events from Supabase (production schema)
   const { data: events = [], isLoading, refetch } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
+          .schema('production')
           .from("events")
           .select("*");
         
@@ -29,7 +30,7 @@ const EventsPage = () => {
         
         // Map database events to our Event type
         const typedEvents: Event[] = data.map(event => ({
-          id: event.id,
+          id: Number(event.id),
           name: event.name || null,
           short_description: event.short_description || null,
           start_date: event.start_date || null,
@@ -60,7 +61,11 @@ const EventsPage = () => {
 
   const handleAddEvent = async (event: Event) => {
     try {
-      const { error } = await supabase.from("events").insert(event);
+      const { error } = await supabase
+        .schema('production')
+        .from("events")
+        .insert(event);
+        
       if (error) throw error;
       
       toast({
@@ -82,6 +87,7 @@ const EventsPage = () => {
   const handleEditEvent = async (updatedEvent: Event) => {
     try {
       const { error } = await supabase
+        .schema('production')
         .from("events")
         .update(updatedEvent)
         .eq("id", updatedEvent.id);
@@ -107,7 +113,11 @@ const EventsPage = () => {
 
   const handleDeleteEvent = async (id: number) => {
     try {
-      const { error } = await supabase.from("events").delete().eq("id", id);
+      const { error } = await supabase
+        .schema('production')
+        .from("events")
+        .delete()
+        .eq("id", id);
       
       if (error) throw error;
       
