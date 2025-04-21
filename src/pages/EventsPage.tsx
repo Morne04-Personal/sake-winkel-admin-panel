@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -6,93 +5,42 @@ import { Plus } from "lucide-react";
 import EventTable from "@/components/events/EventTable";
 import EventForm from "@/components/events/EventForm";
 import { Event } from "@/types";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
 import TableLoader from "@/components/common/TableLoader";
+import { fetchEvents, addEvent, updateEvent, deleteEvent } from "@/services";
+import { Table, TableBody, TableHeader, TableRow, TableHead } from "@/components/ui/table";
 
 const EventsPage = () => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
+  const queryClient = useQueryClient();
 
-  // Fetch events from Supabase production schema
-  const { data: events = [], isLoading, refetch } = useQuery({
+  // Fetch events from Supabase
+  const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
-    queryFn: async () => {
-      try {
-        // Use the from method with a string literal for the table name
-        const { data, error } = await supabase
-          .from('events')
-          .select("*")
-          .is('deleted_at', null);
-        
-        if (error) throw error;
-        
-        // Map database events to our Event type
-        const typedEvents: Event[] = data.map(event => ({
-          id: Number(event.id),
-          name: event.name || null,
-          short_description: event.short_description || null,
-          start_date: event.start_date || null,
-          end_date: event.end_date || null,
-          city: event.city || null,
-          address: event.address || null,
-          venue_name: event.venue_name || null,
-          original_price: event.original_price || null,
-          sale_price: event.sale_price || null,
-          ticket_url: event.ticket_url || null,
-          thumbnail_url: event.thumbnail_url || null,
-          logo_url: event.logo_url || null,
-          is_featured: event.is_featured || false,
-          created_at: event.created_at
-        }));
-        
-        return typedEvents;
-      } catch (error: any) {
-        toast({
-          title: "Error fetching events",
-          description: error.message,
-          variant: "destructive",
-        });
-        return [];
-      }
-    }
+    queryFn: fetchEvents
   });
 
   const handleAddEvent = async (event: Event) => {
-    try {
-      const { error } = await supabase
-        .from('events')
-        .insert(event);
-        
-      if (error) throw error;
-      
+    const success = await addEvent(event);
+    
+    if (success) {
       toast({
         title: "Event added",
         description: "Event has been added successfully",
       });
       
       setIsAddFormOpen(false);
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: "Error adding event",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     }
   };
 
   const handleEditEvent = async (updatedEvent: Event) => {
-    try {
-      const { error } = await supabase
-        .from('events')
-        .update(updatedEvent)
-        .eq("id", updatedEvent.id);
-      
-      if (error) throw error;
-      
+    const success = await updateEvent(updatedEvent);
+    
+    if (success) {
       toast({
         title: "Event updated",
         description: "Event has been updated successfully",
@@ -100,37 +48,20 @@ const EventsPage = () => {
       
       setIsEditFormOpen(false);
       setCurrentEvent(null);
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: "Error updating event",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     }
   };
 
   const handleDeleteEvent = async (id: number) => {
-    try {
-      const { error } = await supabase
-        .from('events')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
-      
-      if (error) throw error;
-      
+    const success = await deleteEvent(id);
+    
+    if (success) {
       toast({
         title: "Event deleted",
         description: "Event has been deleted successfully",
       });
       
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: "Error deleting event",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     }
   };
 
@@ -151,7 +82,24 @@ const EventsPage = () => {
         </div>
 
         {isLoading ? (
-          <TableLoader colSpan={7} />
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">ID</TableHead>
+                  <TableHead className="min-w-[200px]">Name</TableHead>
+                  <TableHead className="min-w-[120px]">Start Date</TableHead>
+                  <TableHead className="min-w-[120px]">End Date</TableHead>
+                  <TableHead className="min-w-[150px]">City</TableHead>
+                  <TableHead className="min-w-[150px]">Price</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableLoader colSpan={7} />
+              </TableBody>
+            </Table>
+          </div>
         ) : (
           <EventTable
             events={events}

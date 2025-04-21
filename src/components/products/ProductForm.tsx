@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +16,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types";
 import CrudDialog from "@/components/common/CrudDialog";
-import { mockSuppliers } from "@/data/mockData";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   Select,
@@ -27,6 +25,8 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { fetchSuppliers } from "@/services";
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -68,6 +68,12 @@ type FormStep = {
 const ProductForm = ({ isOpen, onClose, onSave, initialData, isAdd }: ProductFormProps) => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  
+  // Fetch suppliers for dropdown
+  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: fetchSuppliers
+  });
   
   const formSteps: FormStep[] = [
     {
@@ -162,19 +168,30 @@ const ProductForm = ({ isOpen, onClose, onSave, initialData, isAdd }: ProductFor
                     <FormLabel>Supplier</FormLabel>
                     <Select 
                       onValueChange={(value) => field.onChange(Number(value))}
-                      defaultValue={field.value.toString()}
+                      defaultValue={field.value ? field.value.toString() : undefined}
+                      disabled={isLoadingSuppliers}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select supplier" />
+                          {isLoadingSuppliers ? (
+                            <div className="flex items-center">Loading suppliers...</div>
+                          ) : (
+                            <SelectValue placeholder="Select supplier" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {mockSuppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                            {supplier.name}
+                        {suppliers && suppliers.length > 0 ? (
+                          suppliers.map((supplier) => (
+                            <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                              {supplier.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No suppliers available
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

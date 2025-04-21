@@ -49,26 +49,6 @@ export const signUp = async ({ email, password, first_name, last_name, phone_num
 
     if (error) throw error;
 
-    // Since we're using public schema for development, we'll keep using mock data
-    // TODO: Implement proper user profile creation once schema is ready
-    /* 
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user.id,
-            email,
-            first_name,
-            last_name,
-            phone_number,
-          },
-        ]);
-
-      if (profileError) throw profileError;
-    }
-    */
-
     toast({
       title: "Account created successfully!",
       description: "Please check your email to verify your account.",

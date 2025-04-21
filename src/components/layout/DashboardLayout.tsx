@@ -50,7 +50,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div
           className={cn(
             "flex flex-col flex-1 min-h-screen transition-all duration-300",
-            isMobile ? "w-full" : "lg:pl-72"
+            isMobile ? "w-full" : "lg:pl-0"
           )}
         >
           <header className="sticky top-0 z-30 bg-white shadow-sm">
