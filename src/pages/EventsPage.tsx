@@ -16,15 +16,16 @@ const EventsPage = () => {
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
 
-  // Fetch events from Supabase (production schema)
+  // Fetch events from Supabase production schema
   const { data: events = [], isLoading, refetch } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       try {
+        // Use the from method with a string literal for the table name
         const { data, error } = await supabase
-          .schema('production')
-          .from("events")
-          .select("*");
+          .from('events')
+          .select("*")
+          .is('deleted_at', null);
         
         if (error) throw error;
         
@@ -62,8 +63,7 @@ const EventsPage = () => {
   const handleAddEvent = async (event: Event) => {
     try {
       const { error } = await supabase
-        .schema('production')
-        .from("events")
+        .from('events')
         .insert(event);
         
       if (error) throw error;
@@ -87,8 +87,7 @@ const EventsPage = () => {
   const handleEditEvent = async (updatedEvent: Event) => {
     try {
       const { error } = await supabase
-        .schema('production')
-        .from("events")
+        .from('events')
         .update(updatedEvent)
         .eq("id", updatedEvent.id);
       
@@ -114,9 +113,8 @@ const EventsPage = () => {
   const handleDeleteEvent = async (id: number) => {
     try {
       const { error } = await supabase
-        .schema('production')
-        .from("events")
-        .delete()
+        .from('events')
+        .update({ deleted_at: new Date().toISOString() })
         .eq("id", id);
       
       if (error) throw error;

@@ -16,15 +16,15 @@ const ProductsPage = () => {
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
 
-  // Fetch products from Supabase (production schema)
+  // Fetch products from Supabase
   const { data: products = [], isLoading, refetch } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .schema('production')
-          .from("products")
-          .select("*");
+          .from('products')
+          .select("*")
+          .is('deleted_at', null);
           
         if (error) throw error;
         
@@ -72,8 +72,7 @@ const ProductsPage = () => {
       };
 
       const { error } = await supabase
-        .schema('production')
-        .from("products")
+        .from('products')
         .insert(dbProduct);
         
       if (error) throw error;
@@ -105,8 +104,7 @@ const ProductsPage = () => {
       };
 
       const { error } = await supabase
-        .schema('production')
-        .from("products")
+        .from('products')
         .update(dbProduct)
         .eq("id", updatedProduct.id);
       
@@ -132,9 +130,8 @@ const ProductsPage = () => {
   const handleDeleteProduct = async (id: number) => {
     try {
       const { error } = await supabase
-        .schema('production')
-        .from("products")
-        .delete()
+        .from('products')
+        .update({ deleted_at: new Date().toISOString() })
         .eq("id", id);
       
       if (error) throw error;
