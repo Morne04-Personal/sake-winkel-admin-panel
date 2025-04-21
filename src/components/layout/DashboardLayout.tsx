@@ -1,6 +1,5 @@
-
 import DashboardSidebar from "./DashboardSidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,17 +13,28 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  // Initialize sidebarOpen based on viewport size
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const { user } = useAuth();
+
+  // Update sidebarOpen state when isMobile changes
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const handleSignOut = () => {
     signOut();
   };
 
   return (
-    <SidebarProvider defaultOpen={!isMobile} open={sidebarOpen} onOpenChange={setSidebarOpen}>
+    <SidebarProvider 
+      defaultOpen={!isMobile} 
+      open={sidebarOpen} 
+      onOpenChange={setSidebarOpen}
+    >
       <div className="flex min-h-screen w-full bg-gray-100">
+        {/* Overlay for mobile view when sidebar is open */}
         <div
           className={cn(
             "fixed inset-0 bg-gray-800/60 z-40 lg:hidden",
@@ -33,8 +43,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           onClick={() => setSidebarOpen(false)}
         />
 
+        {/* The sidebar component */}
         <DashboardSidebar />
 
+        {/* Main content area */}
         <div
           className={cn(
             "flex flex-col flex-1 min-h-screen transition-all duration-300",

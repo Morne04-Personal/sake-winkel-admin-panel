@@ -1,4 +1,3 @@
-
 import { 
   LayoutDashboard, 
   Package, 
@@ -20,6 +19,7 @@ import {
 import ColorDivider from "../ColorDivider";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const menuItems = [
   {
@@ -61,13 +61,14 @@ const menuItems = [
 
 const DashboardSidebar = () => {
   const location = useLocation();
+  const { isMobile } = useSidebar();
   
   return (
-    <Sidebar>
+    <Sidebar className="border-r border-gray-200 z-50">
       <SidebarContent>
         <div className="p-6">
-          <h1 className="text-h2 font-bold text-sakewinkel-navy">SAKEwinkel</h1>
-          <p className="text-small text-sakewinkel-slate">Admin Dashboard</p>
+          <h1 className="text-2xl font-bold text-sakewinkel-navy">SAKEwinkel</h1>
+          <p className="text-sm text-sakewinkel-slate">Admin Dashboard</p>
         </div>
         <ColorDivider />
         <SidebarGroup>
@@ -78,6 +79,7 @@ const DashboardSidebar = () => {
                   <SidebarMenuButton 
                     asChild
                     isActive={location.pathname === item.url}
+                    tooltip={item.title}
                   >
                     <Link
                       to={item.url}
