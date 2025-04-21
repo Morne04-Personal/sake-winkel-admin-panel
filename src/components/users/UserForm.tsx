@@ -1,7 +1,7 @@
-
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect } from "react";
 import {
   Form,
   FormControl,
@@ -12,9 +12,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User } from "@/types";
+import { User, Role } from "@/types";
 import CrudDialog from "@/components/common/CrudDialog";
-import { mockRoles, mockSuppliers } from "@/data/mockData";
 import {
   Select,
   SelectContent,
@@ -22,48 +21,86 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { fetchSuppliers } from "@/services";
 
 interface UserFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (user: User) => void;
+  onSave: (user: User | Omit<User, "id" | "created_at" | "updated_at">) => void;
   initialData?: User;
+  roles: Role[];
+  isLoading: boolean;
   isAdd: boolean;
 }
 
 const userSchema = z.object({
   id: z.string().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
   phone_number: z.string().min(1, "Phone number is required"),
+  email: z.string().email("Invalid email address"),
   role_id: z.coerce.number().positive("Role is required"),
   supplier_id: z.union([z.coerce.number().positive().optional().nullable(), z.literal("")])
     .transform(val => val === "" ? null : val),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
+  id_number: z.string().nullable().optional(),
+  entity_reference: z.string().nullable().optional(),
+  entity_account_id: z.string().nullable().optional(),
+  street_address: z.string().nullable().optional(),
+  entity_id: z.string().nullable().optional(),
+  town_name: z.string().nullable().optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
 
-const UserForm = ({ isOpen, onClose, onSave, initialData, isAdd }: UserFormProps) => {
+const UserForm = ({ isOpen, onClose, onSave, initialData, roles, isLoading, isAdd }: UserFormProps) => {
+  const { toast } = useToast();
+  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(
+    initialData?.role_id || null
+  );
+
+  // Fetch suppliers for supplier role users
+  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: fetchSuppliers
+  });
+
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: initialData || {
       first_name: "",
       last_name: "",
-      email: "",
       phone_number: "",
-      role_id: 7,
+      email: "",
+      role_id: 0,
       supplier_id: null,
+      id_number: null,
+      entity_reference: null,
+      entity_account_id: null,
+      street_address: null,
+      entity_id: null,
+      town_name: null,
     },
   });
 
-  const watchRoleId = form.watch("role_id");
-  const isSupplierRole = watchRoleId === 4 || watchRoleId === 5;
+  // Update the selected role when the form value changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'role_id') {
+        setSelectedRoleId(Number(value.role_id));
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
+  // Check if the selected role is a supplier role (roles 4 or 5)
+  const isSupplierRole = selectedRoleId === 4 || selectedRoleId === 5;
 
   const handleSubmit = (values: UserFormValues) => {
-    onSave(values as User);
+    onSave(values);
   };
 
   return (
@@ -152,19 +189,30 @@ const UserForm = ({ isOpen, onClose, onSave, initialData, isAdd }: UserFormProps
                     <FormLabel>Role</FormLabel>
                     <Select 
                       onValueChange={(value) => field.onChange(Number(value))}
-                      defaultValue={field.value.toString()}
+                      defaultValue={field.value ? field.value.toString() : undefined}
+                      disabled={isLoading}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
+                          {isLoading ? (
+                            <div className="flex items-center">Loading roles...</div>
+                          ) : (
+                            <SelectValue placeholder="Select role" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {mockRoles.map((role) => (
-                          <SelectItem key={role.id} value={role.id.toString()}>
-                            {role.name}
+                        {roles && roles.length > 0 ? (
+                          roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id.toString()}>
+                              {role.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No roles available
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -182,18 +230,29 @@ const UserForm = ({ isOpen, onClose, onSave, initialData, isAdd }: UserFormProps
                       <Select 
                         onValueChange={(value) => field.onChange(value ? Number(value) : null)}
                         defaultValue={field.value?.toString() || ""}
+                        disabled={isLoadingSuppliers}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select supplier" />
+                            {isLoadingSuppliers ? (
+                              <div className="flex items-center">Loading suppliers...</div>
+                            ) : (
+                              <SelectValue placeholder="Select supplier" />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {mockSuppliers.map((supplier) => (
-                            <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                              {supplier.name}
+                          {suppliers && suppliers.length > 0 ? (
+                            suppliers.map((supplier) => (
+                              <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                                {supplier.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>
+                              No suppliers available
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />

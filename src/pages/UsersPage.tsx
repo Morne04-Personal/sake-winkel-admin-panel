@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,11 @@ import { Plus } from "lucide-react";
 import UserTable from "@/components/users/UserTable";
 import UserForm from "@/components/users/UserForm";
 import { User } from "@/types";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
-import { mockUsers, mockRoles } from "@/data/mockData";
+import { fetchUsers, fetchRoles, addUser, updateUser, deleteUser } from "@/services";
+import { Table, TableBody, TableHeader, TableRow, TableHead } from "@/components/ui/table";
+import TableLoader from "@/components/common/TableLoader";
 
 const UsersPage = () => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -16,102 +17,58 @@ const UsersPage = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
 
-  // For now, use mock data instead of Supabase queries
-  const { data: roles = mockRoles, isLoading: isRolesLoading } = useQuery({
-    queryKey: ['roles'],
-    queryFn: async () => {
-      // This is temporarily returning mock data
-      // In a real application, this would fetch from Supabase
-      return mockRoles;
-    },
-  });
-
-  // Fetch users
-  const { data: users = mockUsers, isLoading: isUsersLoading } = useQuery({
+  // Fetch users from Supabase
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['users'],
-    queryFn: async () => {
-      // This is temporarily returning mock data
-      // In a real application, this would fetch from Supabase
-      return mockUsers;
-    },
+    queryFn: fetchUsers
   });
 
-  // Add user mutation - mocked for now
-  const addUserMutation = useMutation({
-    mutationFn: async (user: Omit<User, "id" | "created_at" | "updated_at">) => {
-      // Mock adding a user - in a real app, this would call Supabase
-      const newUser: User = {
-        ...user,
-        id: `${mockUsers.length + 1}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      return newUser;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({ title: "User added successfully" });
-      setIsAddFormOpen(false);
-    },
-    onError: (error: Error) => {
-      toast({ 
-        title: "Error adding user", 
-        description: error.message,
-        variant: "destructive"
+  // Fetch roles for the dropdown
+  const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
+    queryKey: ['roles'],
+    queryFn: fetchRoles
+  });
+
+  const handleAddUser = async (user: Omit<User, "id" | "created_at" | "updated_at">) => {
+    const success = await addUser(user);
+    
+    if (success) {
+      toast({
+        title: "User added",
+        description: "User has been added successfully",
       });
-    }
-  });
-
-  // Update user mutation - mocked for now
-  const updateUserMutation = useMutation({
-    mutationFn: async (user: User) => {
-      // Mock updating a user - in a real app, this would call Supabase
-      return user;
-    },
-    onSuccess: () => {
+      
+      setIsAddFormOpen(false);
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({ title: "User updated successfully" });
+    }
+  };
+
+  const handleEditUser = async (user: User) => {
+    const success = await updateUser(user);
+    
+    if (success) {
+      toast({
+        title: "User updated",
+        description: "User has been updated successfully",
+      });
+      
       setIsEditFormOpen(false);
       setCurrentUser(null);
-    },
-    onError: (error: Error) => {
-      toast({ 
-        title: "Error updating user", 
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Delete user mutation - mocked for now
-  const deleteUserMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // Mock deleting a user - in a real app, this would call Supabase
-      return id;
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({ title: "User deleted successfully" });
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Error deleting user", 
-        description: error.message,
-        variant: "destructive"
-      });
     }
-  });
-
-  const handleAddUser = (user: Omit<User, "id" | "created_at" | "updated_at">) => {
-    addUserMutation.mutate(user);
   };
 
-  const handleEditUser = (user: User) => {
-    updateUserMutation.mutate(user);
-  };
-
-  const handleDeleteUser = (id: string) => {
-    deleteUserMutation.mutate(id);
+  const handleDeleteUser = async (id: string) => {
+    const success = await deleteUser(id);
+    
+    if (success) {
+      toast({
+        title: "User deleted",
+        description: "User has been deleted successfully",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    }
   };
 
   const openEditForm = (user: User) => {
@@ -135,8 +92,24 @@ const UsersPage = () => {
           </Button>
         </div>
 
-        {isUsersLoading ? (
-          <div className="flex justify-center items-center h-40">Loading users...</div>
+        {isLoadingUsers ? (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[200px]">Name</TableHead>
+                  <TableHead className="min-w-[200px]">Email</TableHead>
+                  <TableHead className="min-w-[150px]">Phone</TableHead>
+                  <TableHead className="min-w-[120px]">Role</TableHead>
+                  <TableHead className="min-w-[120px]">Created</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableLoader colSpan={6} />
+              </TableBody>
+            </Table>
+          </div>
         ) : (
           <UserTable
             users={users}
@@ -151,6 +124,8 @@ const UsersPage = () => {
             isOpen={isAddFormOpen}
             onClose={() => setIsAddFormOpen(false)}
             onSave={handleAddUser}
+            roles={roles}
+            isLoading={isLoadingRoles}
             isAdd
           />
         )}
@@ -161,6 +136,8 @@ const UsersPage = () => {
             onClose={() => setIsEditFormOpen(false)}
             onSave={handleEditUser}
             initialData={currentUser}
+            roles={roles}
+            isLoading={isLoadingRoles}
             isAdd={false}
           />
         )}
