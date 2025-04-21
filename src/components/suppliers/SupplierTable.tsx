@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { Supplier } from "@/types";
-import { formatDate } from "@/data/mockData";
+import { formatDate } from "@/utils/formatUtils";
 
 interface SupplierTableProps {
   suppliers: Supplier[];

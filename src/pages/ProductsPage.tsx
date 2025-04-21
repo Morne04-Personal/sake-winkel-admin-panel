@@ -5,40 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ProductTable from "@/components/products/ProductTable";
 import ProductForm from "@/components/products/ProductForm";
-import { mockProducts } from "@/data/mockData";
 import { Product } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProductsPage = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
 
-  const handleAddProduct = (product: Product) => {
-    const newProduct = {
-      ...product,
-      id: Math.max(0, ...products.map((p) => p.id)) + 1,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setProducts([...products, newProduct]);
+  // Fetch products from Supabase
+  const { data: products = [], isLoading, refetch } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("*");
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+  });
+
+  const handleAddProduct = async (product: Product) => {
+    await supabase.from("products").insert(product);
     setIsAddFormOpen(false);
+    refetch();
   };
 
-  const handleEditProduct = (updatedProduct: Product) => {
-    setProducts(
-      products.map((p) =>
-        p.id === updatedProduct.id
-          ? { ...updatedProduct, updated_at: new Date().toISOString() }
-          : p
-      )
-    );
+  const handleEditProduct = async (updatedProduct: Product) => {
+    await supabase.from("products").update(updatedProduct).eq("id", updatedProduct.id);
     setIsEditFormOpen(false);
     setCurrentProduct(null);
+    refetch();
   };
 
-  const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter((p) => p.id !== id));
+  const handleDeleteProduct = async (id: number) => {
+    await supabase.from("products").delete().eq("id", id);
+    refetch();
   };
 
   const openEditForm = (product: Product) => {
@@ -57,11 +58,15 @@ const ProductsPage = () => {
           </Button>
         </div>
 
-        <ProductTable
-          products={products}
-          onEdit={openEditForm}
-          onDelete={handleDeleteProduct}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-40">Loading products...</div>
+        ) : (
+          <ProductTable
+            products={products}
+            onEdit={openEditForm}
+            onDelete={handleDeleteProduct}
+          />
+        )}
 
         {isAddFormOpen && (
           <ProductForm

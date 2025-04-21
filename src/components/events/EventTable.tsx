@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { Event } from "@/types";
-import { formatCurrency, formatDate } from "@/data/mockData";
+import { formatCurrency, formatDate } from "@/utils/formatUtils";
 
 interface EventTableProps {
   events: Event[];

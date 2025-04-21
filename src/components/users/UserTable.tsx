@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
 import { User } from "@/types";
-import { formatDate } from "@/data/mockData";
+import { formatDate } from "@/utils/formatUtils";
 import TableLoader from "@/components/common/TableLoader";
 import ActionButton from "@/components/common/ActionButton";
 

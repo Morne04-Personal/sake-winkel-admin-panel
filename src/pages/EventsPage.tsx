@@ -5,37 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import EventTable from "@/components/events/EventTable";
 import EventForm from "@/components/events/EventForm";
-import { mockEvents } from "@/data/mockData";
 import { Event } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const EventsPage = () => {
-  const [events, setEvents] = useState<Event[]>(mockEvents);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
 
-  const handleAddEvent = (event: Event) => {
-    const newEvent = {
-      ...event,
-      id: Math.max(0, ...events.map((e) => e.id)) + 1,
-      created_at: new Date().toISOString(),
-    };
-    setEvents([...events, newEvent]);
+  // Fetch events from Supabase
+  const { data: events = [], isLoading, refetch } = useQuery({
+    queryKey: ['events'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("events").select("*");
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+  });
+
+  const handleAddEvent = async (event: Event) => {
+    await supabase.from("events").insert(event);
     setIsAddFormOpen(false);
+    refetch();
   };
 
-  const handleEditEvent = (updatedEvent: Event) => {
-    setEvents(
-      events.map((e) =>
-        e.id === updatedEvent.id ? updatedEvent : e
-      )
-    );
+  const handleEditEvent = async (updatedEvent: Event) => {
+    await supabase.from("events").update(updatedEvent).eq("id", updatedEvent.id);
     setIsEditFormOpen(false);
     setCurrentEvent(null);
+    refetch();
   };
 
-  const handleDeleteEvent = (id: number) => {
-    setEvents(events.filter((e) => e.id !== id));
+  const handleDeleteEvent = async (id: number) => {
+    await supabase.from("events").delete().eq("id", id);
+    refetch();
   };
 
   const openEditForm = (event: Event) => {
@@ -54,11 +58,15 @@ const EventsPage = () => {
           </Button>
         </div>
 
-        <EventTable
-          events={events}
-          onEdit={openEditForm}
-          onDelete={handleDeleteEvent}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-40">Loading events...</div>
+        ) : (
+          <EventTable
+            events={events}
+            onEdit={openEditForm}
+            onDelete={handleDeleteEvent}
+          />
+        )}
 
         {isAddFormOpen && (
           <EventForm

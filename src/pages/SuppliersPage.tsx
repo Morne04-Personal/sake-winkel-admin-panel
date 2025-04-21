@@ -5,40 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import SupplierTable from "@/components/suppliers/SupplierTable";
 import SupplierForm from "@/components/suppliers/SupplierForm";
-import { mockSuppliers } from "@/data/mockData";
 import { Supplier } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const SuppliersPage = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState<Supplier | null>(null);
 
-  const handleAddSupplier = (supplier: Supplier) => {
-    const newSupplier = {
-      ...supplier,
-      id: Math.max(0, ...suppliers.map((p) => p.id)) + 1,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setSuppliers([...suppliers, newSupplier]);
+  // Fetch suppliers from Supabase
+  const { data: suppliers = [], isLoading, refetch } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("*");
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+  });
+
+  const handleAddSupplier = async (supplier: Supplier) => {
+    await supabase.from("suppliers").insert(supplier);
     setIsAddFormOpen(false);
+    refetch();
   };
 
-  const handleEditSupplier = (updatedSupplier: Supplier) => {
-    setSuppliers(
-      suppliers.map((s) =>
-        s.id === updatedSupplier.id
-          ? { ...updatedSupplier, updated_at: new Date().toISOString() }
-          : s
-      )
-    );
+  const handleEditSupplier = async (updatedSupplier: Supplier) => {
+    await supabase.from("suppliers").update(updatedSupplier).eq("id", updatedSupplier.id);
     setIsEditFormOpen(false);
     setCurrentSupplier(null);
+    refetch();
   };
 
-  const handleDeleteSupplier = (id: number) => {
-    setSuppliers(suppliers.filter((s) => s.id !== id));
+  const handleDeleteSupplier = async (id: number) => {
+    await supabase.from("suppliers").delete().eq("id", id);
+    refetch();
   };
 
   const openEditForm = (supplier: Supplier) => {
@@ -57,11 +58,15 @@ const SuppliersPage = () => {
           </Button>
         </div>
 
-        <SupplierTable
-          suppliers={suppliers}
-          onEdit={openEditForm}
-          onDelete={handleDeleteSupplier}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-40">Loading suppliers...</div>
+        ) : (
+          <SupplierTable
+            suppliers={suppliers}
+            onEdit={openEditForm}
+            onDelete={handleDeleteSupplier}
+          />
+        )}
 
         {isAddFormOpen && (
           <SupplierForm

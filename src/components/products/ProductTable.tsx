@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { Product } from "@/types";
-import { formatCurrency } from "@/data/mockData";
+import { formatCurrency } from "@/utils/formatUtils";
 
 interface ProductTableProps {
   products: Product[];
