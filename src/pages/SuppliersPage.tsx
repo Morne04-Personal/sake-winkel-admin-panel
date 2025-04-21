@@ -8,6 +8,7 @@ import SupplierForm from "@/components/suppliers/SupplierForm";
 import { Supplier } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 const SuppliersPage = () => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -18,28 +19,127 @@ const SuppliersPage = () => {
   const { data: suppliers = [], isLoading, refetch } = useQuery({
     queryKey: ['suppliers'],
     queryFn: async () => {
-      const { data, error } = await supabase.from("suppliers").select("*");
-      if (error) throw new Error(error.message);
-      return data || [];
+      try {
+        const { data, error } = await supabase.from("suppliers").select("*");
+        if (error) throw error;
+        
+        // Map database suppliers to our Supplier type
+        const typedSuppliers: Supplier[] = data.map(supplier => ({
+          id: supplier.id,
+          name: supplier.name || "",
+          trading_as: null,
+          entity_type: null,
+          identification_type: "Other",
+          identification_number: "0",
+          is_vat_exempt: false,
+          vat_exemption_proof_url: null,
+          is_vat_registered: false,
+          vat_number: null,
+          industry_sector: null,
+          cluster_grouping: null,
+          zone: null,
+          description: null,
+          comments: null,
+          logo_url: null,
+          settlement_bank_choice: "Other",
+          business_description_role: null,
+          declaration_name: null,
+          declaration_signed: null,
+          declaration_date: null,
+          created_at: supplier.created_at,
+          updated_at: supplier.created_at
+        }));
+        
+        return typedSuppliers;
+      } catch (error: any) {
+        toast({
+          title: "Error fetching suppliers",
+          description: error.message,
+          variant: "destructive",
+        });
+        return [];
+      }
     }
   });
 
   const handleAddSupplier = async (supplier: Supplier) => {
-    await supabase.from("suppliers").insert(supplier);
-    setIsAddFormOpen(false);
-    refetch();
+    try {
+      // Convert to Supabase supplier format
+      const dbSupplier = {
+        name: supplier.name,
+        adminEmail: null
+      };
+
+      const { error } = await supabase.from("suppliers").insert(dbSupplier);
+      if (error) throw error;
+      
+      toast({
+        title: "Supplier added",
+        description: "Supplier has been added successfully",
+      });
+      
+      setIsAddFormOpen(false);
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error adding supplier",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditSupplier = async (updatedSupplier: Supplier) => {
-    await supabase.from("suppliers").update(updatedSupplier).eq("id", updatedSupplier.id);
-    setIsEditFormOpen(false);
-    setCurrentSupplier(null);
-    refetch();
+    try {
+      // Convert to Supabase supplier format
+      const dbSupplier = {
+        name: updatedSupplier.name,
+        adminEmail: null
+      };
+
+      const { error } = await supabase
+        .from("suppliers")
+        .update(dbSupplier)
+        .eq("id", updatedSupplier.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Supplier updated",
+        description: "Supplier has been updated successfully",
+      });
+      
+      setIsEditFormOpen(false);
+      setCurrentSupplier(null);
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error updating supplier",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteSupplier = async (id: number) => {
-    await supabase.from("suppliers").delete().eq("id", id);
-    refetch();
+    try {
+      const { error } = await supabase.from("suppliers").delete().eq("id", id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Supplier deleted",
+        description: "Supplier has been deleted successfully",
+      });
+      
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting supplier",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const openEditForm = (supplier: Supplier) => {
