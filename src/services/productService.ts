@@ -1,41 +1,20 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types";
-import { DbProduct } from "@/types/dbTypes";
 import { toast } from "@/components/ui/use-toast";
 
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    // No need to specify schema since client is configured for production schema
     const { data, error } = await supabase
       .from('products')
       .select("*")
-      .is('deleted_at', null) // Only select non-deleted products
+      .schema('production')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
       
     if (error) throw error;
     
-    // Map database products to our Product type
-    const typedProducts: Product[] = data.map((product: DbProduct) => ({
-      id: Number(product.id),
-      supplier_id: product.supplier_id,
-      name: product.name,
-      sale_price: product.sale_price,
-      original_price: product.original_price,
-      qty_in_stock: product.qty_in_stock,
-      delivery_cost: product.delivery_cost,
-      commission_value: product.commission_value,
-      short_overview: product.short_overview,
-      description: product.description,
-      color: product.color,
-      specifications: product.specifications,
-      main_image_url: product.main_image_url,
-      on_homepage: product.on_homepage,
-      max_per_order: product.max_per_order,
-      created_at: product.created_at,
-      updated_at: product.updated_at
-    }));
-    
-    return typedProducts;
+    return data || [];
   } catch (error: any) {
     toast({
       title: "Error fetching products",
@@ -46,14 +25,12 @@ export const fetchProducts = async (): Promise<Product[]> => {
   }
 };
 
-export const addProduct = async (product: Product): Promise<boolean> => {
+export const addProduct = async (product: Omit<Product, "id" | "created_at" | "updated_at">): Promise<boolean> => {
   try {
-    // Remove any fields that are not in the database schema
-    const { id, created_at, updated_at, ...dbProduct } = product;
-
     const { error } = await supabase
       .from('products')
-      .insert(dbProduct);
+      .insert(product)
+      .schema('production');
       
     if (error) throw error;
     return true;
@@ -69,13 +46,14 @@ export const addProduct = async (product: Product): Promise<boolean> => {
 
 export const updateProduct = async (product: Product): Promise<boolean> => {
   try {
-    // Remove any fields that should not be updated
-    const { created_at, updated_at, ...dbProduct } = product;
-
     const { error } = await supabase
       .from('products')
-      .update(dbProduct)
-      .eq("id", product.id);
+      .update({
+        ...product,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", product.id)
+      .schema('production');
     
     if (error) throw error;
     return true;
@@ -91,11 +69,14 @@ export const updateProduct = async (product: Product): Promise<boolean> => {
 
 export const deleteProduct = async (id: number): Promise<boolean> => {
   try {
-    // Using soft delete by setting deleted_at timestamp
     const { error } = await supabase
       .from('products')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id);
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+      .schema('production');
     
     if (error) throw error;
     return true;
