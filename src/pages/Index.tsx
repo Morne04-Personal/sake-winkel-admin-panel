@@ -1,3 +1,4 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -141,7 +142,7 @@ const Index = () => {
 
 // Component to display recently added products
 const RecentProducts = () => {
-  const { data: recentProducts, isLoading } = useQuery({
+  const { data: recentProducts = [], isLoading } = useQuery({
     queryKey: ['recentProducts'],
     queryFn: async () => {
       try {
@@ -160,7 +161,7 @@ const RecentProducts = () => {
           .limit(5);
           
         if (error) throw error;
-        return data;
+        return data || [];
       } catch (error) {
         console.error("Error fetching recent products:", error);
         return [];
@@ -191,7 +192,7 @@ const RecentProducts = () => {
       <CardContent>
         {recentProducts && recentProducts.length > 0 ? (
           <div className="space-y-4">
-            {recentProducts.map((product) => (
+            {recentProducts.map((product: any) => (
               <div key={product.id} className="flex justify-between items-center border-b pb-2 last:border-0">
                 <div>
                   <div className="font-medium">{product.name}</div>

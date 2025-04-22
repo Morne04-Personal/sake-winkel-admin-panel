@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -27,31 +28,33 @@ const SuppliersPage = () => {
           
         if (error) throw error;
         
+        if (!data) return [];
+        
         // Map database suppliers to our Supplier type
         const typedSuppliers: Supplier[] = data.map(supplier => ({
           id: Number(supplier.id),
           name: supplier.name || "",
-          trading_as: supplier.trading_as,
-          entity_type: supplier.entity_type,
+          trading_as: supplier.trading_as || null,
+          entity_type: supplier.entity_type || null,
           identification_type: supplier.identification_type || "Company Registration",
           identification_number: supplier.identification_number || "",
           is_vat_exempt: supplier.is_vat_exempt || false,
-          vat_exemption_proof_url: supplier.vat_exemption_proof_url,
+          vat_exemption_proof_url: supplier.vat_exemption_proof_url || null,
           is_vat_registered: supplier.is_vat_registered || false,
-          vat_number: supplier.vat_number,
-          industry_sector: supplier.industry_sector,
-          cluster_grouping: supplier.cluster_grouping,
-          zone: supplier.zone,
-          description: supplier.description,
-          comments: supplier.comments,
-          logo_url: supplier.logo_url,
+          vat_number: supplier.vat_number || null,
+          industry_sector: supplier.industry_sector || null,
+          cluster_grouping: supplier.cluster_grouping || null,
+          zone: supplier.zone || null,
+          description: supplier.description || null,
+          comments: supplier.comments || null,
+          logo_url: supplier.logo_url || null,
           settlement_bank_choice: supplier.settlement_bank_choice || "Other",
-          business_description_role: supplier.business_description_role,
-          declaration_name: supplier.declaration_name,
-          declaration_signed: supplier.declaration_signed,
-          declaration_date: supplier.declaration_date,
-          created_at: supplier.created_at,
-          updated_at: supplier.updated_at || supplier.created_at
+          business_description_role: supplier.business_description_role || null,
+          declaration_name: supplier.declaration_name || null,
+          declaration_signed: supplier.declaration_signed || null,
+          declaration_date: supplier.declaration_date || null,
+          created_at: supplier.created_at || "",
+          updated_at: supplier.updated_at || supplier.created_at || ""
         }));
         
         return typedSuppliers;

@@ -99,13 +99,24 @@ const UserForm = ({ isOpen, onClose, onSave, initialData, roles, isLoading, isAd
   const isSupplierRole = selectedRoleId === 4 || selectedRoleId === 5;
 
   const handleSubmit = (values: UserFormValues) => {
+    // Convert any empty strings to null for nullable fields
+    const cleanedValues = {
+      ...values,
+      id_number: values.id_number || null,
+      entity_reference: values.entity_reference || null,
+      entity_account_id: values.entity_account_id || null,
+      street_address: values.street_address || null,
+      entity_id: values.entity_id || null,
+      town_name: values.town_name || null,
+    };
+
     if (initialData && initialData.id) {
       // If editing existing user, make sure to include the ID
-      onSave({ ...values, id: initialData.id } as User);
+      onSave({ ...cleanedValues, id: initialData.id } as User);
     } else {
       // If adding new user, pass values without id/timestamps
-      const { id, created_at, updated_at, ...newUser } = values;
-      onSave(newUser);
+      const { id, created_at, updated_at, ...newUser } = cleanedValues;
+      onSave(newUser as Omit<User, "id" | "created_at" | "updated_at">);
     }
   };
 
