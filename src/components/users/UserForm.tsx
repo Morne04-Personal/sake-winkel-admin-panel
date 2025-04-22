@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +12,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { User, Role } from "@/types";
 import CrudDialog from "@/components/common/CrudDialog";
 import {
@@ -21,9 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSuppliers } from "@/services";
+import FormActions from "@/components/common/FormActions";
 
 interface UserFormProps {
   isOpen: boolean;
@@ -57,7 +57,6 @@ const userSchema = z.object({
 type UserFormValues = z.infer<typeof userSchema>;
 
 const UserForm = ({ isOpen, onClose, onSave, initialData, roles, isLoading, isAdd }: UserFormProps) => {
-  const { toast } = useToast();
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(
     initialData?.role_id || null
   );
@@ -100,7 +99,14 @@ const UserForm = ({ isOpen, onClose, onSave, initialData, roles, isLoading, isAd
   const isSupplierRole = selectedRoleId === 4 || selectedRoleId === 5;
 
   const handleSubmit = (values: UserFormValues) => {
-    onSave(values);
+    if (initialData && initialData.id) {
+      // If editing existing user, make sure to include the ID
+      onSave({ ...values, id: initialData.id } as User);
+    } else {
+      // If adding new user, pass values without id/timestamps
+      const { id, created_at, updated_at, ...newUser } = values;
+      onSave(newUser);
+    }
   };
 
   return (
@@ -193,7 +199,7 @@ const UserForm = ({ isOpen, onClose, onSave, initialData, roles, isLoading, isAd
                       disabled={isLoading}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white">
                           {isLoading ? (
                             <div className="flex items-center">Loading roles...</div>
                           ) : (
@@ -233,7 +239,7 @@ const UserForm = ({ isOpen, onClose, onSave, initialData, roles, isLoading, isAd
                         disabled={isLoadingSuppliers}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-white">
                             {isLoadingSuppliers ? (
                               <div className="flex items-center">Loading suppliers...</div>
                             ) : (
@@ -263,19 +269,7 @@ const UserForm = ({ isOpen, onClose, onSave, initialData, roles, isLoading, isAd
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4 pt-6 border-t">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              className="btn-cancel"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="btn-submit">
-              {isAdd ? "Add User" : "Save Changes"}
-            </Button>
-          </div>
+          <FormActions onCancel={onClose} isSubmitting={false} submitLabel={isAdd ? "Add User" : "Save Changes"} />
         </form>
       </Form>
     </CrudDialog>

@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@/types";
+import { User, Role } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 
 export const fetchUsers = async (): Promise<User[]> => {
@@ -8,10 +8,9 @@ export const fetchUsers = async (): Promise<User[]> => {
     const { data, error } = await supabase
       .from('users')
       .select("*")
-      .schema('production')
       .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-      
+      .order('first_name');
+    
     if (error) throw error;
     return data || [];
   } catch (error: any) {
@@ -24,24 +23,32 @@ export const fetchUsers = async (): Promise<User[]> => {
   }
 };
 
+export const fetchRoles = async (): Promise<Role[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('roles')
+      .select("*")
+      .order('id');
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error: any) {
+    toast({
+      title: "Error fetching roles",
+      description: error.message,
+      variant: "destructive",
+    });
+    return [];
+  }
+};
+
 export const addUser = async (user: Omit<User, "id" | "created_at" | "updated_at">): Promise<boolean> => {
   try {
-    // Create auth user first
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: user.email,
-      password: 'TemporaryPassword123!', // You would typically generate this or get it from the form
-      options: {
-        data: {
-          first_name: user.first_name,
-          last_name: user.last_name,
-          phone_number: user.phone_number
-        }
-      }
-    });
-
-    if (authError) throw authError;
-    
-    // The trigger will handle creating the user in production.users
+    const { error } = await supabase
+      .from('users')
+      .insert(user);
+      
+    if (error) throw error;
     return true;
   } catch (error: any) {
     toast({
@@ -55,14 +62,21 @@ export const addUser = async (user: Omit<User, "id" | "created_at" | "updated_at
 
 export const updateUser = async (user: User): Promise<boolean> => {
   try {
+    // Extract only the properties we want to update
+    const { id, first_name, last_name, email, phone_number, role_id, supplier_id } = user;
+    
     const { error } = await supabase
       .from('users')
       .update({
-        ...user,
+        first_name,
+        last_name,
+        email,
+        phone_number,
+        role_id,
+        supplier_id,
         updated_at: new Date().toISOString()
       })
-      .eq("id", user.id)
-      .schema('production');
+      .eq("id", id);
     
     if (error) throw error;
     return true;
@@ -84,8 +98,7 @@ export const deleteUser = async (id: string): Promise<boolean> => {
         deleted_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
-      .eq("id", id)
-      .schema('production');
+      .eq("id", id);
     
     if (error) throw error;
     return true;
