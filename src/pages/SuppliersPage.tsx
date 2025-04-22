@@ -23,38 +23,37 @@ const SuppliersPage = () => {
       try {
         const { data, error } = await supabase
           .from('suppliers')
-          .select("*")
-          .is('deleted_at', null);
+          .select("*");
           
         if (error) throw error;
         
         if (!data) return [];
         
-        // Map database suppliers to our Supplier type
+        // Map database suppliers to our Supplier type with default values
         const typedSuppliers: Supplier[] = data.map(supplier => ({
           id: Number(supplier.id),
           name: supplier.name || "",
-          trading_as: supplier.trading_as || null,
-          entity_type: supplier.entity_type || null,
-          identification_type: supplier.identification_type || "Company Registration",
-          identification_number: supplier.identification_number || "",
-          is_vat_exempt: supplier.is_vat_exempt || false,
-          vat_exemption_proof_url: supplier.vat_exemption_proof_url || null,
-          is_vat_registered: supplier.is_vat_registered || false,
-          vat_number: supplier.vat_number || null,
-          industry_sector: supplier.industry_sector || null,
-          cluster_grouping: supplier.cluster_grouping || null,
-          zone: supplier.zone || null,
-          description: supplier.description || null,
-          comments: supplier.comments || null,
-          logo_url: supplier.logo_url || null,
-          settlement_bank_choice: supplier.settlement_bank_choice || "Other",
-          business_description_role: supplier.business_description_role || null,
-          declaration_name: supplier.declaration_name || null,
-          declaration_signed: supplier.declaration_signed || null,
-          declaration_date: supplier.declaration_date || null,
+          trading_as: "", // Not in actual DB, providing defaults
+          entity_type: "", 
+          identification_type: "Company Registration",
+          identification_number: "",
+          is_vat_exempt: false,
+          vat_exemption_proof_url: null,
+          is_vat_registered: false,
+          vat_number: null,
+          industry_sector: null,
+          cluster_grouping: null,
+          zone: null,
+          description: null,
+          comments: null,
+          logo_url: null,
+          settlement_bank_choice: "Other",
+          business_description_role: null,
+          declaration_name: null,
+          declaration_signed: null,
+          declaration_date: null,
           created_at: supplier.created_at || "",
-          updated_at: supplier.updated_at || supplier.created_at || ""
+          updated_at: supplier.created_at || ""
         }));
         
         return typedSuppliers;
@@ -74,9 +73,13 @@ const SuppliersPage = () => {
       // Extract ID and timestamps which are handled by Supabase
       const { id, created_at, updated_at, ...supplierData } = supplier;
 
+      // Only include fields that exist in the actual database table
       const { error } = await supabase
         .from('suppliers')
-        .insert(supplierData);
+        .insert({
+          name: supplierData.name,
+          adminEmail: supplierData.identification_number || null
+        });
         
       if (error) throw error;
       
@@ -101,11 +104,12 @@ const SuppliersPage = () => {
       // Extract ID and timestamps
       const { id, created_at, updated_at, ...supplierData } = updatedSupplier;
 
+      // Only update fields that exist in the database
       const { error } = await supabase
         .from('suppliers')
         .update({
-          ...supplierData,
-          updated_at: new Date().toISOString()
+          name: supplierData.name,
+          adminEmail: supplierData.identification_number || null
         })
         .eq("id", id);
       
@@ -130,10 +134,10 @@ const SuppliersPage = () => {
 
   const handleDeleteSupplier = async (id: number) => {
     try {
-      // Soft delete with timestamp
+      // For actual delete since the table doesn't have deleted_at
       const { error } = await supabase
         .from('suppliers')
-        .update({ deleted_at: new Date().toISOString() })
+        .delete()
         .eq("id", id);
       
       if (error) throw error;
