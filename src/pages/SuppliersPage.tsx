@@ -6,154 +6,47 @@ import { Plus } from "lucide-react";
 import SupplierTable from "@/components/suppliers/SupplierTable";
 import SupplierForm from "@/components/suppliers/SupplierForm";
 import { Supplier } from "@/types";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchSuppliers, addSupplier, updateSupplier, deleteSupplier } from "@/services";
+import { Table, TableBody, TableHeader, TableRow, TableHead } from "@/components/ui/table";
 import TableLoader from "@/components/common/TableLoader";
 
 const SuppliersPage = () => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState<Supplier | null>(null);
+  const queryClient = useQueryClient();
 
   // Fetch suppliers from Supabase
-  const { data: suppliers = [], isLoading, refetch } = useQuery({
+  const { data: suppliers = [], isLoading } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('suppliers')
-          .select("*");
-          
-        if (error) throw error;
-        
-        if (!data) return [];
-        
-        // Map database suppliers to our Supplier type with default values
-        const typedSuppliers: Supplier[] = data.map(supplier => ({
-          id: Number(supplier.id),
-          name: supplier.name || "",
-          trading_as: "", // Not in actual DB, providing defaults
-          entity_type: "", 
-          identification_type: "Company Registration",
-          identification_number: "",
-          is_vat_exempt: false,
-          vat_exemption_proof_url: null,
-          is_vat_registered: false,
-          vat_number: null,
-          industry_sector: null,
-          cluster_grouping: null,
-          zone: null,
-          description: null,
-          comments: null,
-          logo_url: null,
-          settlement_bank_choice: "Other",
-          business_description_role: null,
-          declaration_name: null,
-          declaration_signed: null,
-          declaration_date: null,
-          created_at: supplier.created_at || "",
-          updated_at: supplier.created_at || ""
-        }));
-        
-        return typedSuppliers;
-      } catch (error: any) {
-        toast({
-          title: "Error fetching suppliers",
-          description: error.message,
-          variant: "destructive",
-        });
-        return [];
-      }
-    }
+    queryFn: fetchSuppliers
   });
 
-  const handleAddSupplier = async (supplier: Supplier) => {
-    try {
-      // Extract ID and timestamps which are handled by Supabase
-      const { id, created_at, updated_at, ...supplierData } = supplier;
-
-      // Only include fields that exist in the actual database table
-      const { error } = await supabase
-        .from('suppliers')
-        .insert({
-          name: supplierData.name,
-          adminEmail: supplierData.identification_number || null
-        });
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Supplier added",
-        description: "Supplier has been added successfully",
-      });
-      
+  const handleAddSupplier = async (supplier: Omit<Supplier, "id" | "created_at" | "updated_at">) => {
+    const success = await addSupplier(supplier);
+    
+    if (success) {
       setIsAddFormOpen(false);
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: "Error adding supplier",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     }
   };
 
   const handleEditSupplier = async (updatedSupplier: Supplier) => {
-    try {
-      // Extract ID and timestamps
-      const { id, created_at, updated_at, ...supplierData } = updatedSupplier;
-
-      // Only update fields that exist in the database
-      const { error } = await supabase
-        .from('suppliers')
-        .update({
-          name: supplierData.name,
-          adminEmail: supplierData.identification_number || null
-        })
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Supplier updated",
-        description: "Supplier has been updated successfully",
-      });
-      
+    const success = await updateSupplier(updatedSupplier);
+    
+    if (success) {
       setIsEditFormOpen(false);
       setCurrentSupplier(null);
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: "Error updating supplier",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     }
   };
 
   const handleDeleteSupplier = async (id: number) => {
-    try {
-      // For actual delete since the table doesn't have deleted_at
-      const { error } = await supabase
-        .from('suppliers')
-        .delete()
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Supplier deleted",
-        description: "Supplier has been deleted successfully",
-      });
-      
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: "Error deleting supplier",
-        description: error.message,
-        variant: "destructive",
-      });
+    const success = await deleteSupplier(id);
+    
+    if (success) {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     }
   };
 
@@ -174,7 +67,21 @@ const SuppliersPage = () => {
         </div>
 
         {isLoading ? (
-          <TableLoader colSpan={7} />
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Contact Email</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableLoader colSpan={4} />
+              </TableBody>
+            </Table>
+          </div>
         ) : (
           <SupplierTable
             suppliers={suppliers}

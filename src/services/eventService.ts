@@ -12,7 +12,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data || [];
+    return data as Event[] || [];
   } catch (error: any) {
     toast({
       title: "Error fetching events",

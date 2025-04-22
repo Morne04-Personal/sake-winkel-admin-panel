@@ -12,7 +12,7 @@ export const fetchSuppliers = async (): Promise<Supplier[]> => {
       .order('name');
     
     if (error) throw error;
-    return data || [];
+    return data as Supplier[] || [];
   } catch (error: any) {
     toast({
       title: "Error fetching suppliers",

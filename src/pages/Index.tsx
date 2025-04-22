@@ -1,3 +1,4 @@
+
 import React from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -167,18 +168,20 @@ const RecentProducts = () => {
         
         // Get supplier names for each product
         if (data && data.length > 0) {
-          const supplierIds = data.map(product => product.supplier_id);
+          const supplierIds = data.map(product => product.supplier_id).filter(Boolean);
           
-          const { data: suppliers } = await supabase
-            .from('suppliers')
-            .select('id, name')
-            .in('id', supplierIds);
-            
-          // Attach supplier name to each product
-          return data.map(product => ({
-            ...product,
-            supplier_name: suppliers?.find(s => s.id === product.supplier_id)?.name || 'Unknown'
-          }));
+          if (supplierIds.length > 0) {
+            const { data: suppliers } = await supabase
+              .from('suppliers')
+              .select('id, name')
+              .in('id', supplierIds);
+              
+            // Attach supplier name to each product
+            return data.map(product => ({
+              ...product,
+              supplier_name: suppliers?.find(s => s.id === product.supplier_id)?.name || 'Unknown'
+            }));
+          }
         }
         
         return data || [];
