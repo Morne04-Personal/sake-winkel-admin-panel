@@ -8,7 +8,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
     const { data, error } = await supabase
       .from('products')
       .select("*")
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
       
     if (error) throw error;
