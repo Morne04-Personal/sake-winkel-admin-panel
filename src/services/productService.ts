@@ -8,8 +8,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
     const { data, error } = await supabase
       .from('products')
       .select("*")
-      .schema('production')
-      .is('deleted_at', null)
+      .eq('deleted_at', null)
       .order('created_at', { ascending: false });
       
     if (error) throw error;
@@ -29,8 +28,7 @@ export const addProduct = async (product: Omit<Product, "id" | "created_at" | "u
   try {
     const { error } = await supabase
       .from('products')
-      .insert(product)
-      .schema('production');
+      .insert(product);
       
     if (error) throw error;
     return true;
@@ -52,8 +50,7 @@ export const updateProduct = async (product: Product): Promise<boolean> => {
         ...product,
         updated_at: new Date().toISOString()
       })
-      .eq("id", product.id)
-      .schema('production');
+      .eq("id", product.id);
     
     if (error) throw error;
     return true;
@@ -75,8 +72,7 @@ export const deleteProduct = async (id: number): Promise<boolean> => {
         deleted_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
-      .eq("id", id)
-      .schema('production');
+      .eq("id", id);
     
     if (error) throw error;
     return true;

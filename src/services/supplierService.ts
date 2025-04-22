@@ -8,7 +8,6 @@ export const fetchSuppliers = async (): Promise<Supplier[]> => {
     const { data, error } = await supabase
       .from('suppliers')
       .select("*")
-      .schema('production')
       .is('deleted_at', null)
       .order('name');
     
@@ -28,8 +27,7 @@ export const addSupplier = async (supplier: Omit<Supplier, "id" | "created_at" |
   try {
     const { error } = await supabase
       .from('suppliers')
-      .insert(supplier)
-      .schema('production');
+      .insert(supplier);
       
     if (error) throw error;
     return true;
@@ -51,8 +49,7 @@ export const updateSupplier = async (supplier: Supplier): Promise<boolean> => {
         ...supplier,
         updated_at: new Date().toISOString()
       })
-      .eq("id", supplier.id)
-      .schema('production');
+      .eq("id", supplier.id);
     
     if (error) throw error;
     return true;
@@ -74,8 +71,7 @@ export const deleteSupplier = async (id: number): Promise<boolean> => {
         deleted_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
-      .eq("id", id)
-      .schema('production');
+      .eq("id", id);
     
     if (error) throw error;
     return true;

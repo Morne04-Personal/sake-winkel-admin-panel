@@ -31,7 +31,8 @@ const Index = () => {
       try {
         const { count, error } = await supabase
           .from('suppliers')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true })
+          .is('deleted_at', null);
           
         if (error) throw error;
         return count || 0;
@@ -42,13 +43,18 @@ const Index = () => {
     }
   });
 
-  // Replace users query with a different one since users table doesn't exist in public schema
+  // Fetch user count
   const { data: userCount, isLoading: isLoadingUsers } = useQuery({
     queryKey: ['userCount'],
     queryFn: async () => {
       try {
-        // For demo purposes, just return a fixed number since we can't access auth.users directly
-        return 5;
+        const { count, error } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .is('deleted_at', null);
+
+        if (error) throw error;
+        return count || 0;
       } catch (error) {
         console.error("Error fetching user count:", error);
         return 0;
@@ -56,13 +62,18 @@ const Index = () => {
     }
   });
 
-  // Replace events query with a different one since events table doesn't exist in public schema
+  // Fetch event count
   const { data: eventCount, isLoading: isLoadingEvents } = useQuery({
     queryKey: ['eventCount'],
     queryFn: async () => {
       try {
-        // For demo purposes, just return a fixed number
-        return 3;
+        const { count, error } = await supabase
+          .from('events')
+          .select('*', { count: 'exact', head: true })
+          .is('deleted_at', null);
+
+        if (error) throw error;
+        return count || 0;
       } catch (error) {
         console.error("Error fetching event count:", error);
         return 0;
@@ -141,29 +152,36 @@ const RecentProducts = () => {
         const { data, error } = await supabase
           .from('products')
           .select(`
-            id, 
+            id,
             name, 
-            price as original_price, 
-            price as sale_price,
+            original_price,
+            sale_price,
             created_at,
-            supplier:suppliers(name)
+            supplier_id
           `)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(5);
           
         if (error) throw error;
         
-        // Transform the data to match expected format
-        const transformedData = data?.map(product => ({
-          id: product.id,
-          name: product.name,
-          original_price: product.original_price,
-          sale_price: product.sale_price,
-          created_at: product.created_at,
-          suppliers: { name: product.supplier?.name }
-        }));
+        // Get supplier names for each product
+        if (data && data.length > 0) {
+          const supplierIds = data.map(product => product.supplier_id);
+          
+          const { data: suppliers } = await supabase
+            .from('suppliers')
+            .select('id, name')
+            .in('id', supplierIds);
+            
+          // Attach supplier name to each product
+          return data.map(product => ({
+            ...product,
+            supplier_name: suppliers?.find(s => s.id === product.supplier_id)?.name || 'Unknown'
+          }));
+        }
         
-        return transformedData || [];
+        return data || [];
       } catch (error) {
         console.error("Error fetching recent products:", error);
         return [];
@@ -199,7 +217,7 @@ const RecentProducts = () => {
                 <div>
                   <div className="font-medium">{product.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    {product.suppliers?.name || 'No supplier'}
+                    {product.supplier_name}
                   </div>
                 </div>
                 <div className="text-right">
